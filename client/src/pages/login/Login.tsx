@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -13,7 +15,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-dark via-card to-primary p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-primary-dark via-card to-primary p-4">
       {/* Decoración de fondo */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-20 w-72 h-72 bg-button/20 rounded-full blur-3xl"></div>
@@ -24,7 +26,7 @@ const Login = () => {
       <div className="relative w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-primary to-card p-8 text-center">
+          <div className="bg-linear-to-r from-primary to-card p-8 text-center">
             <div className="w-20 h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
               <span className="text-4xl font-black text-primary">D</span>
             </div>
@@ -111,8 +113,9 @@ const Login = () => {
 
               {/* Botón de Login */}
               <button
+                onClick={() => navigate("/dashboard/productos/crear")}
                 type="submit"
-                className="w-full bg-gradient-to-r from-button to-button-hover text-white py-3 rounded-lg font-bold text-lg hover:shadow-lg hover:scale-[1.02] transition-all duration-200 flex items-center justify-center space-x-2"
+                className="w-full bg-linear-to-r from-button to-button-hover text-white py-3 rounded-lg font-bold text-lg hover:shadow-lg hover:scale-[1.02] transition-all duration-200 flex items-center justify-center space-x-2"
               >
                 <span>Iniciar Sesión</span>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
