@@ -1,49 +1,55 @@
-import { supabase } from '../config/supabase.js';
+import { pool } from "../config/db.js";
 
 // Obtener todas las categorías
 export const getCategorias = async (req, res) => {
-  const { data, error } = await supabase.from('categorias').select('*');
-
-  if (error) {
+  try {
+    const result = await pool.query("SELECT * FROM categorias ORDER BY id_categoria ASC");
+    const data = result.rows;
+    res.json(data);
+  } catch (error) {
     return res.status(500).json({ error: error.message });
   }
-
-  res.json(data);
 };
 
 // Obtener una categoría por ID
 export const getCategoriaById = async (req, res) => {
   const { id } = req.params;
 
-  const { data, error } = await supabase
-    .from('categorias')
-    .select('*')
-    .eq('id_categoria', id)
-    .single();
+  try {
+    const result = await pool.query(
+      "SELECT * FROM categorias WHERE id_categoria = $1",
+      [id]
+    );
+    const data = result.rows[0];
 
-  if (error) {
-    return res.status(404).json({ error: 'Categoría no encontrada' });
+    if (!data) {
+      return res.status(404).json({ error: "Categoría no encontrada" });
+    }
+
+    res.json(data);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
-
-  res.json(data);
 };
 
 // Crear una nueva categoría
 export const createCategoria = async (req, res) => {
   const { nombre, descripcion } = req.body;
 
-  const { data, error } = await supabase.from('categorias').insert([
-    { nombre, descripcion }
-  ]);
+  try {
+    const result = await pool.query(
+      "INSERT INTO categorias (nombre, descripcion) VALUES ($1, $2) RETURNING *",
+      [nombre, descripcion]
+    );
+    const data = result.rows;
 
-  if (error) {
+    res.status(201).json({
+      message: "Categoría creada correctamente",
+      data,
+    });
+  } catch (error) {
     return res.status(500).json({ error: error.message });
   }
-
-  res.status(201).json({
-    message: 'Categoría creada correctamente',
-    data
-  });
 };
 
 // Actualizar una categoría
@@ -51,34 +57,42 @@ export const updateCategoria = async (req, res) => {
   const { id } = req.params;
   const { nombre, descripcion } = req.body;
 
-  const { data, error } = await supabase
-    .from('categorias')
-    .update({ nombre, descripcion })
-    .eq('id_categoria', id)
-    .select();
+  try {
+    const result = await pool.query(
+      "UPDATE categorias SET nombre = $1, descripcion = $2 WHERE id_categoria = $3 RETURNING *",
+      [nombre, descripcion, id]
+    );
+    const data = result.rows;
 
-  if (error) {
+    if (data.length === 0) {
+      return res.status(404).json({ error: "Categoría no encontrada" });
+    }
+
+    res.json({
+      message: "Categoría actualizada correctamente",
+      data,
+    });
+  } catch (error) {
     return res.status(500).json({ error: error.message });
   }
-
-  res.json({
-    message: 'Categoría actualizada correctamente',
-    data
-  });
 };
 
 // Eliminar una categoría
 export const deleteCategoria = async (req, res) => {
   const { id } = req.params;
 
-  const { error } = await supabase
-    .from('categorias')
-    .delete()
-    .eq('id_categoria', id);
+  try {
+    const result = await pool.query(
+      "DELETE FROM categorias WHERE id_categoria = $1 RETURNING *",
+      [id]
+    );
 
-  if (error) {
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Categoría no encontrada" });
+    }
+
+    res.json({ message: "Categoría eliminada correctamente" });
+  } catch (error) {
     return res.status(500).json({ error: error.message });
   }
-
-  res.json({ message: 'Categoría eliminada correctamente' });
 };

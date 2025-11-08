@@ -1,62 +1,116 @@
-import { supabase } from '../config/supabase.js';
+import { pool } from "../config/db.js";
 
-// Obtener todos los usuarios
+// ✅ Obtener todos los usuarios
 export const getUsuarios = async (req, res) => {
-  const { data, error } = await supabase.from('usuarios').select('*');
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+  try {
+    const result = await pool.query("SELECT * FROM usuarios ORDER BY id_usuario ASC");
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error en getUsuarios:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
-// Obtener usuario por id
+// ✅ Obtener usuario por ID
 export const getUsuarioById = async (req, res) => {
   const { id } = req.params;
-  const { data, error } = await supabase
-    .from('usuarios')
-    .select('*')
-    .eq('id_usuario', id)
-    .single();
+  try {
+    const result = await pool.query("SELECT * FROM usuarios WHERE id_usuario = $1", [id]);
 
-  if (error) return res.status(404).json({ error: 'Usuario no encontrado' });
-  res.json(data);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error en getUsuarioById:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
-// Crear usuario
+// ✅ Crear nuevo usuario
 export const createUsuario = async (req, res) => {
-  const { nombre, telefono, correo, contrasena, rol } = req.body;
-  if (!nombre || !correo || !contrasena) {
-    return res.status(400).json({ error: 'Faltan campos requeridos' });
+  const { id_usuario, nombre, telefono, correo } = req.body;
+
+  if (!id_usuario || !nombre || !correo) {
+    return res.status(400).json({ error: "Faltan campos requeridos: id_usuario, nombre, correo" });
   }
 
-  const { data, error } = await supabase
-    .from('usuarios')
-    .insert([{ nombre, telefono, correo, contrasena, rol }])
-    .select();
+  try {
+    // Verificar si el correo ya existe
+    const check = await pool.query("SELECT id_usuario FROM usuarios WHERE correo = $1", [correo]);
+    if (check.rows.length > 0) {
+      return res.status(400).json({ error: "El correo ya está registrado" });
+    }
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.status(201).json(data[0]);
+    const result = await pool.query(
+      `INSERT INTO usuarios (id_usuario, nombre, telefono, correo, fecha_creacion)
+       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+       RETURNING *`,
+      [id_usuario, nombre, telefono || null, correo]
+    );
+
+    res.status(201).json({
+      message: "Usuario creado correctamente ✅",
+      usuario: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error en createUsuario:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
-// Actualizar usuario
+// ✅ Actualizar usuario
 export const updateUsuario = async (req, res) => {
   const { id } = req.params;
   const payload = req.body;
 
-  const { data, error } = await supabase
-    .from('usuarios')
-    .update(payload)
-    .eq('id_usuario', id)
-    .select();
+  if (Object.keys(payload).length === 0) {
+    return res.status(400).json({ error: "No hay campos para actualizar" });
+  }
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ message: 'Usuario actualizado', data: data[0] });
+  try {
+    const fields = Object.keys(payload)
+      .map((key, i) => `${key} = $${i + 1}`)
+      .join(", ");
+    const values = Object.values(payload);
+
+    const result = await pool.query(
+      `UPDATE usuarios SET ${fields} WHERE id_usuario = $${values.length + 1} RETURNING *`,
+      [...values, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    res.json({
+      message: "Usuario actualizado correctamente ✅",
+      usuario: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error en updateUsuario:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
-// Eliminar usuario
+// ✅ Eliminar usuario
 export const deleteUsuario = async (req, res) => {
   const { id } = req.params;
 
-  const { error } = await supabase.from('usuarios').delete().eq('id_usuario', id);
-  if (error) return res.status(500).json({ error: error.message });
+  try {
+    const result = await pool.query(
+      "DELETE FROM usuarios WHERE id_usuario = $1 RETURNING *",
+      [id]
+    );
 
-  res.json({ message: 'Usuario eliminado' });
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    res.json({ message: "Usuario eliminado correctamente ✅" });
+  } catch (error) {
+    console.error("Error en deleteUsuario:", error);
+    res.status(500).json({ error: error.message });
+  }
 };

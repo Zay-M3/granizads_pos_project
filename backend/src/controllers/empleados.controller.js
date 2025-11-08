@@ -1,58 +1,153 @@
-import { supabase } from '../config/supabase.js';
+import { pool } from "../config/db.js";
+import bcrypt from "bcrypt";
 
-// Obtener empleados (con datos de usuario)
+/**
+ * ✅ CONTROLADOR: EMPLEADOS
+ * Maneja CRUD y oculta contraseñas de forma segura.
+ */
+
+// 🟢 Obtener todos los empleados (sin mostrar contraseñas)
 export const getEmpleados = async (req, res) => {
-  const { data, error } = await supabase.from('empleados').select('*, usuarios(*)');
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+  try {
+    const result = await pool.query(`
+      SELECT 
+        id_empleado,
+        id_usuario,
+        fecha_nacimiento,
+        activo,
+        rol
+      FROM empleados
+      ORDER BY id_empleado ASC
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error en getEmpleados:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
-// Obtener empleado por id
+// 🟢 Obtener un empleado por ID
 export const getEmpleadoById = async (req, res) => {
   const { id } = req.params;
-  const { data, error } = await supabase
-    .from('empleados')
-    .select('*, usuarios(*)')
-    .eq('id_empleado', id)
-    .single();
 
-  if (error) return res.status(404).json({ error: 'Empleado no encontrado' });
-  res.json(data);
+  try {
+    const result = await pool.query(
+      `
+      SELECT 
+        id_empleado,
+        id_usuario,
+        fecha_nacimiento,
+        activo,
+        rol
+      FROM empleados
+      WHERE id_empleado = $1
+      `,
+      [id]
+    );
+
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: "Empleado no encontrado" });
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error en getEmpleadoById:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
-// Crear empleado
+// 🟢 Crear nuevo empleado
 export const createEmpleado = async (req, res) => {
-  const { id_usuario, contrato, fecha_nacimiento, fecha_contratacion, salario } = req.body;
-  if (!id_usuario) return res.status(400).json({ error: 'id_usuario requerido' });
+  const { id_usuario, fecha_nacimiento, contrasena, rol, activo } = req.body;
 
-  const { data, error } = await supabase
-    .from('empleados')
-    .insert([{ id_usuario, contrato, fecha_nacimiento, fecha_contratacion, salario }])
-    .select();
+  if (!id_usuario || !contrasena)
+    return res.status(400).json({ error: "id_usuario y contrasena son requeridos" });
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.status(201).json(data[0]);
+  try {
+    // Encriptar contraseña antes de guardar
+    const hashedPassword = await bcrypt.hash(contrasena, 10);
+
+    const result = await pool.query(
+      `
+      INSERT INTO empleados (id_usuario, fecha_nacimiento, contrasena, rol, activo)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id_empleado, id_usuario, fecha_nacimiento, rol, activo
+      `,
+      [id_usuario, fecha_nacimiento, hashedPassword, rol || "cajero", activo ?? true]
+    );
+
+    res.status(201).json({
+      message: "Empleado creado correctamente ✅",
+      empleado: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error en createEmpleado:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
-// Actualizar empleado
+// 🟢 Actualizar empleado
 export const updateEmpleado = async (req, res) => {
   const { id } = req.params;
-  const payload = req.body;
+  const { contrasena, ...otrosCampos } = req.body;
 
-  const { data, error } = await supabase
-    .from('empleados')
-    .update(payload)
-    .eq('id_empleado', id)
-    .select();
+  try {
+    let updateQuery = [];
+    let values = [];
+    let i = 1;
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ message: 'Empleado actualizado', data: data[0] });
+    for (const [key, value] of Object.entries(otrosCampos)) {
+      updateQuery.push(`${key} = $${i++}`);
+      values.push(value);
+    }
+
+    if (contrasena) {
+      const hashedPassword = await bcrypt.hash(contrasena, 10);
+      updateQuery.push(`contrasena = $${i++}`);
+      values.push(hashedPassword);
+    }
+
+    if (updateQuery.length === 0)
+      return res.status(400).json({ error: "No hay campos para actualizar" });
+
+    const query = `
+      UPDATE empleados
+      SET ${updateQuery.join(", ")}
+      WHERE id_empleado = $${i}
+      RETURNING id_empleado, id_usuario, fecha_nacimiento, rol, activo
+    `;
+
+    const result = await pool.query(query, [...values, id]);
+
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: "Empleado no encontrado" });
+
+    res.json({
+      message: "Empleado actualizado correctamente ✅",
+      empleado: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error en updateEmpleado:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
-// Eliminar empleado
+// 🟢 Eliminar empleado
 export const deleteEmpleado = async (req, res) => {
   const { id } = req.params;
-  const { error } = await supabase.from('empleados').delete().eq('id_empleado', id);
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ message: 'Empleado eliminado' });
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM empleados WHERE id_empleado = $1 RETURNING id_empleado",
+      [id]
+    );
+
+    if (result.rowCount === 0)
+      return res.status(404).json({ error: "Empleado no encontrado" });
+
+    res.json({ message: "Empleado eliminado correctamente ✅" });
+  } catch (error) {
+    console.error("Error en deleteEmpleado:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
