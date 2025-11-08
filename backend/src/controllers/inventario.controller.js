@@ -1,14 +1,15 @@
-import { supabase } from "../config/supabase.js";
+import { pool } from "../config/db.js";
 
 // Obtener todos los inventarios
 export const getInventarios = async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from("inventarios")
-      .select("*, productos(nombre, categoria, precio)");
-
-    if (error) throw error;
-    res.json(data);
+    const result = await pool.query(`
+      SELECT i.*, p.nombre, p.categoria, p.precio
+      FROM inventarios i
+      LEFT JOIN productos p ON i.id_producto = p.id_producto
+      ORDER BY i.id_inventario ASC
+    `);
+    res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -18,16 +19,17 @@ export const getInventarios = async (req, res) => {
 export const getInventarioById = async (req, res) => {
   const { id } = req.params;
   try {
-    const { data, error } = await supabase
-      .from("inventarios")
-      .select("*, productos(nombre, categoria, precio)")
-      .eq("id_inventario", id)
-      .single();
+    const result = await pool.query(`
+      SELECT i.*, p.nombre, p.categoria, p.precio
+      FROM inventarios i
+      LEFT JOIN productos p ON i.id_producto = p.id_producto
+      WHERE i.id_inventario = $1
+    `, [id]);
 
-    if (error || !data)
+    if (result.rows.length === 0)
       return res.status(404).json({ error: "Inventario no encontrado" });
 
-    res.json(data);
+    res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -38,27 +40,19 @@ export const createInventario = async (req, res) => {
   const { id_producto, unidades, stock_minimo } = req.body;
 
   if (!id_producto || typeof unidades !== "number") {
-    return res
-      .status(400)
-      .json({ error: "Campos obligatorios: id_producto, unidades" });
+    return res.status(400).json({
+      error: "Campos obligatorios: id_producto, unidades"
+    });
   }
 
   try {
-    const { data, error } = await supabase
-      .from("inventarios")
-      .insert([
-        {
-          id_producto,
-          unidades,
-          stock_minimo: stock_minimo || 10,
-          fecha_actualizacion: new Date().toISOString().slice(0, 10),
-        },
-      ])
-      .select();
+    const result = await pool.query(`
+      INSERT INTO inventarios (id_producto, unidades, stock_minimo, fecha_actualizacion)
+      VALUES ($1, $2, $3, CURRENT_DATE)
+      RETURNING *
+    `, [id_producto, unidades, stock_minimo || 10]);
 
-    if (error) throw error;
-
-    res.status(201).json(data[0]);
+    res.status(201).json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -70,23 +64,23 @@ export const updateInventario = async (req, res) => {
   const { id_producto, unidades, stock_minimo } = req.body;
 
   try {
-    const { data, error } = await supabase
-      .from("inventarios")
-      .update({
-        id_producto,
-        unidades,
-        stock_minimo,
-        fecha_actualizacion: new Date().toISOString().slice(0, 10),
-      })
-      .eq("id_inventario", id)
-      .select();
+    const result = await pool.query(`
+      UPDATE inventarios
+      SET id_producto = COALESCE($1, id_producto),
+          unidades = COALESCE($2, unidades),
+          stock_minimo = COALESCE($3, stock_minimo),
+          fecha_actualizacion = CURRENT_DATE
+      WHERE id_inventario = $4
+      RETURNING *
+    `, [id_producto, unidades, stock_minimo, id]);
 
-    if (error) throw error;
-
-    if (!data || data.length === 0)
+    if (result.rows.length === 0)
       return res.status(404).json({ error: "Inventario no encontrado" });
 
-    res.json({ message: "Inventario actualizado correctamente", data: data[0] });
+    res.json({
+      message: "Inventario actualizado correctamente",
+      data: result.rows[0],
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -96,12 +90,13 @@ export const updateInventario = async (req, res) => {
 export const deleteInventario = async (req, res) => {
   const { id } = req.params;
   try {
-    const { error } = await supabase
-      .from("inventarios")
-      .delete()
-      .eq("id_inventario", id);
+    const result = await pool.query(
+      "DELETE FROM inventarios WHERE id_inventario = $1 RETURNING *",
+      [id]
+    );
 
-    if (error) throw error;
+    if (result.rowCount === 0)
+      return res.status(404).json({ error: "Inventario no encontrado" });
 
     res.json({ message: "Inventario eliminado correctamente" });
   } catch (err) {
