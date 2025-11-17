@@ -36,7 +36,9 @@ const Layout = () => {
 
         {/* Menú de navegación */}
         <nav className="flex flex-col space-y-6">
-          <button className="w-12 h-12 rounded-lg bg-primary hover:bg-card transition-colors flex items-center justify-center cursor-pointer">
+          <button 
+            onClick={() => navigate("/dashboard")}
+            className="w-12 h-12 rounded-lg bg-primary hover:bg-card transition-colors flex items-center justify-center cursor-pointer">
             <svg
               className="w-6 h-6 text-white"
               fill="none"
@@ -52,7 +54,9 @@ const Layout = () => {
             </svg>
           </button>
 
-          <button className="w-12 h-12 rounded-lg hover:bg-primary/20 transition-colors flex items-center justify-center cursor-pointer">
+          <button 
+            onClick={() => navigate("/dashboard/productos")}
+            className="w-12 h-12 rounded-lg hover:bg-primary/20 transition-colors flex items-center justify-center cursor-pointer">
             <svg
               className="w-6 h-6 text-secondary"
               fill="none"
