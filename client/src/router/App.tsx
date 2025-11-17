@@ -3,6 +3,7 @@ import Layout from "../layout/Layout";
 import Home from "../pages/home/Home";
 import Login from "../pages/login/Login";
 import CreateProducts from "../pages/products/CreateProducts";
+import ListProducts from "../pages/products/ListProducts";
 
 export const router = createBrowserRouter([
   {
@@ -16,6 +17,10 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <Home />,
+      },
+      {
+        path: "productos",
+        element: <ListProducts />,
       },
       {
         path: "productos/crear",
