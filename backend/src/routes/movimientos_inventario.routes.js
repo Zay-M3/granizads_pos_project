@@ -1,16 +1,16 @@
 import express from 'express';
 import {
   getMovimientos,
-  getMovimientoById,
-  createMovimiento,
-  deleteMovimiento
+  postAgregarStock,
+  postConsumirStock,
+
 } from '../controllers/movimientos_inventario.controller.js';
 
 const router = express.Router();
 
 router.get('/', getMovimientos);
-router.get('/:id', getMovimientoById);
-router.post('/', createMovimiento);
-router.delete('/:id', deleteMovimiento);
+router.post('/', postAgregarStock);
+router.post('/', postConsumirStock);
+
 
 export default router;
