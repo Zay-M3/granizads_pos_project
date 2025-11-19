@@ -40,9 +40,9 @@ const CreateInputs = () => {
       alert('Insumo registrado exitosamente ✅');
       reset();
       navigate('/dashboard/inventario');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error al crear insumo:', error);
-      const errorMessage = error.response?.data?.error || 'Error al registrar el insumo';
+      const errorMessage = (error as { response?: { data?: { error?: string } } }).response?.data?.error || 'Error al registrar el insumo';
       alert(errorMessage + ' ❌');
     }
   };

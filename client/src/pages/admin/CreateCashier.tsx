@@ -38,9 +38,9 @@ const CreateCashier = () => {
       alert("Cajero registrado exitosamente ✅");
       reset();
       navigate(-1);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error al crear cajero:", error);
-      const errorMessage = error.response?.data?.error || "Error al registrar el cajero";
+      const errorMessage = (error as { response?: { data?: { error?: string } } }).response?.data?.error || "Error al registrar el cajero";
       alert(errorMessage + " ❌");
     }
   };

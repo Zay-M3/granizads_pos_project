@@ -84,9 +84,9 @@ const CreateProducts = () => {
       reset();
       setInsumos([]);
       navigate('/dashboard/productos');
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error al crear producto:", error);
-      const errorMessage = error.response?.data?.error || "Error al crear el producto";
+      const errorMessage = (error as { response?: { data?: { error?: string } } }).response?.data?.error || "Error al crear el producto";
       alert(errorMessage + " ❌");
     }
   };

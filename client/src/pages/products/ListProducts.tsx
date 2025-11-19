@@ -99,9 +99,9 @@ const ListProducts = () => {
         await deleteProducto(productToDelete.id_producto);
         setProducts(prevProducts => prevProducts.filter(p => p.id_producto !== productToDelete.id_producto));
         alert('Producto eliminado exitosamente ✅');
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error al eliminar producto:', error);
-        const errorMessage = error.response?.data?.error || 'Error al eliminar el producto';
+        const errorMessage = (error as { response?: { data?: { error?: string } } }).response?.data?.error || 'Error al eliminar el producto';
         alert(errorMessage + ' ❌');
       }
     }
