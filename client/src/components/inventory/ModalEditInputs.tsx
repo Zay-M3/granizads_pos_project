@@ -10,7 +10,7 @@ interface ModalEditInputsProps {
 }
 
 const ModalEditInputs = ({ isOpen, onClose, insumo, onSave }: ModalEditInputsProps) => {
-  const { register, handleSubmit, formState: { errors }, watch, reset, setValue } = useForm<Insumo>({
+  const { register, handleSubmit, formState: { errors }, watch, reset } = useForm<Insumo>({
     defaultValues: {
       nombre: "",
       unidad_medida: "litros",

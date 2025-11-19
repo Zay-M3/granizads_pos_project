@@ -1,39 +1,44 @@
 import { useState, useEffect } from 'react';
-import type { ProductFormData } from '@utils/CreateProductsUtil';
-
-type ProductWithUI = ProductFormData & {
-  id_producto?: number;
-  category?: string;
-  stock?: number;
-  image?: string;
-  status?: 'available' | 'low-stock' | 'out-of-stock';
-};
+import type { Producto } from '@utils/CreateProductsUtil';
+import type { Categoria } from '@utils/CategoryUtils';
+import { updateProducto } from '@api/productos.api';
+import { getCategorias } from '@api/categorias.api';
 
 interface ModalEditProductProps {
   isOpen: boolean;
   onClose: () => void;
-  product: ProductWithUI | null;
-  onSave: (product: ProductWithUI) => void;
+  product: Producto | null;
+  onSave: (product: Producto) => void;
 }
 
 const ModalEditProduct = ({ isOpen, onClose, product, onSave }: ModalEditProductProps) => {
-  const [formData, setFormData] = useState<ProductWithUI>({
+  const [formData, setFormData] = useState<Producto>({
     id_producto: 0,
     id_categoria: 0,
-    id_empleado: 1,
+    id_empleado: 0,
     nombre: '',
-    tipo: 'coctel',
+    tipo: '',
     precio: 0,
     descripcion: '',
-    receta: [],
-    // Campos UI
-    category: '',
-    stock: 0,
-    image: '📦',
-    status: 'available'
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+
+  // Cargar categorías
+  useEffect(() => {
+    const loadCategorias = async () => {
+      try {
+        const data = await getCategorias();
+        setCategorias(data);
+      } catch (error) {
+        console.error('Error al cargar categorías:', error);
+      }
+    };
+    if (isOpen) {
+      loadCategorias();
+    }
+  }, [isOpen]);
 
   // Actualizar formData cuando cambie el producto
   useEffect(() => {
@@ -58,7 +63,7 @@ const ModalEditProduct = ({ isOpen, onClose, product, onSave }: ModalEditProduct
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'precio' || name === 'stock' ? Number(value) : value
+      [name]: name === 'precio' || name === 'id_categoria' ? Number(value) : value
     }));
     // Limpiar error del campo
     if (errors[name]) {
@@ -73,36 +78,36 @@ const ModalEditProduct = ({ isOpen, onClose, product, onSave }: ModalEditProduct
       newErrors.nombre = 'El nombre es requerido';
     }
 
-    if (!formData.category?.trim()) {
-      newErrors.category = 'La categoría es requerida';
+    if (!formData.tipo?.trim()) {
+      newErrors.tipo = 'El tipo es requerido';
+    }
+
+    if (!formData.id_categoria || formData.id_categoria === 0) {
+      newErrors.id_categoria = 'La categoría es requerida';
     }
 
     if (formData.precio <= 0) {
       newErrors.precio = 'El precio debe ser mayor a 0';
     }
 
-    if ((formData.stock || 0) < 0) {
-      newErrors.stock = 'El stock no puede ser negativo';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (validate()) {
-      // Determinar el estado basado en el stock
-      let status: 'available' | 'low-stock' | 'out-of-stock' = 'available';
-      if ((formData.stock || 0) === 0) {
-        status = 'out-of-stock';
-      } else if ((formData.stock || 0) <= 10) {
-        status = 'low-stock';
+    if (validate() && formData.id_producto) {
+      try {
+        await updateProducto(formData.id_producto, formData);
+        onSave(formData);
+        alert('Producto actualizado exitosamente ✅');
+        onClose();
+      } catch (error: any) {
+        console.error('Error al actualizar producto:', error);
+        const errorMessage = error.response?.data?.error || 'Error al actualizar el producto';
+        alert(errorMessage + ' ❌');
       }
-
-      onSave({ ...formData, status });
-      onClose();
     }
   };
 
@@ -169,55 +174,54 @@ const ModalEditProduct = ({ isOpen, onClose, product, onSave }: ModalEditProduct
             )}
           </div>
 
-          {/* Grid para Categoría e Icono */}
+          {/* Grid para Categoría y Tipo */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Categoría */}
             <div>
-              <label htmlFor="category" className="block text-sm font-bold text-gray-700 mb-2">
+              <label htmlFor="id_categoria" className="block text-sm font-bold text-gray-700 mb-2">
                 Categoría *
               </label>
               <select
-                id="category"
-                name="category"
-                value={formData.category}
+                id="id_categoria"
+                name="id_categoria"
+                value={formData.id_categoria}
                 onChange={handleChange}
                 className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
-                  errors.category 
+                  errors.id_categoria 
                     ? 'border-red-500 focus:ring-red-500' 
                     : 'border-secondary focus:ring-button'
                 }`}
               >
-                <option value="">Seleccionar categoría</option>
-                <option value="Bebidas">Bebidas</option>
-                <option value="Cervezas">Cervezas</option>
-                <option value="Vinos">Vinos</option>
-                <option value="Licores">Licores</option>
-                <option value="Snacks">Snacks</option>
-                <option value="Otros">Otros</option>
+                <option value="0">Seleccionar categoría</option>
+                {categorias.map((cat) => (
+                  <option key={cat.id_categoria} value={cat.id_categoria}>
+                    {cat.nombre}
+                  </option>
+                ))}
               </select>
-              {errors.category && (
+              {errors.id_categoria && (
                 <p className="text-red-500 text-sm mt-1 flex items-center">
                   <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
-                  {errors.category}
+                  {errors.id_categoria}
                 </p>
               )}
             </div>
 
-            {/* Icono */}
+            {/* Tipo (Emoji selector) */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">
-                Icono del Producto
+                Tipo (Icono) *
               </label>
               <div className="grid grid-cols-7 gap-2">
                 {emojis.map(emoji => (
                   <button
                     key={emoji}
                     type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, image: emoji }))}
+                    onClick={() => setFormData(prev => ({ ...prev, tipo: emoji }))}
                     className={`text-2xl p-2 rounded-lg border-2 transition-all hover:scale-110 ${
-                      formData.image === emoji 
+                      formData.tipo === emoji 
                         ? 'border-button bg-button/10' 
                         : 'border-secondary hover:border-button/50'
                     }`}
@@ -226,72 +230,48 @@ const ModalEditProduct = ({ isOpen, onClose, product, onSave }: ModalEditProduct
                   </button>
                 ))}
               </div>
+              {errors.tipo && (
+                <p className="text-red-500 text-sm mt-1 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.tipo}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Grid para Precio y Stock */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Precio */}
-            <div>
-              <label htmlFor="precio" className="block text-sm font-bold text-gray-700 mb-2">
-                Precio (COP) *
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-3 text-gray-500 font-medium">$</span>
-                <input
-                  type="number"
-                  id="precio"
-                  name="precio"
-                  value={formData.precio}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
-                    errors.precio 
-                      ? 'border-red-500 focus:ring-red-500' 
-                      : 'border-secondary focus:ring-button'
-                  }`}
-                  placeholder="0.00"
-                />
-              </div>
-              {errors.precio && (
-                <p className="text-red-500 text-sm mt-1 flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  {errors.precio}
-                </p>
-              )}
-            </div>
-
-            {/* Stock */}
-            <div>
-              <label htmlFor="stock" className="block text-sm font-bold text-gray-700 mb-2">
-                Stock Disponible *
-              </label>
+          {/* Precio */}
+          <div>
+            <label htmlFor="precio" className="block text-sm font-bold text-gray-700 mb-2">
+              Precio (COP) *
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-3 text-gray-500 font-medium">$</span>
               <input
                 type="number"
-                id="stock"
-                name="stock"
-                value={formData.stock}
+                id="precio"
+                name="precio"
+                value={formData.precio}
                 onChange={handleChange}
                 min="0"
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
-                  errors.stock 
+                step="0.01"
+                className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                  errors.precio 
                     ? 'border-red-500 focus:ring-red-500' 
                     : 'border-secondary focus:ring-button'
                 }`}
-                placeholder="0"
+                placeholder="0.00"
               />
-              {errors.stock && (
-                <p className="text-red-500 text-sm mt-1 flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  {errors.stock}
-                </p>
-              )}
             </div>
+            {errors.precio && (
+              <p className="text-red-500 text-sm mt-1 flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                {errors.precio}
+              </p>
+            )}
           </div>
 
           {/* Preview del producto */}
@@ -299,23 +279,18 @@ const ModalEditProduct = ({ isOpen, onClose, product, onSave }: ModalEditProduct
             <p className="text-sm font-bold text-gray-700 mb-3">Vista Previa</p>
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center text-3xl shadow-sm">
-                {formData.image}
+                {formData.tipo || '📦'}
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-lg text-gray-800">
                   {formData.nombre || 'Nombre del producto'}
                 </h3>
                 <p className="text-sm text-gray-500">
-                  {formData.category || 'Categoría'}
+                  {categorias.find(c => c.id_categoria === formData.id_categoria)?.nombre || 'Categoría'}
                 </p>
-                <div className="flex items-center space-x-4 mt-1">
-                  <span className="text-primary font-bold">
-                    ${formData.precio.toLocaleString()}
-                  </span>
-                  <span className="text-sm text-gray-600">
-                    Stock: {formData.stock || 0}
-                  </span>
-                </div>
+                <span className="text-primary font-bold">
+                  ${formData.precio.toLocaleString()}
+                </span>
               </div>
             </div>
           </div>

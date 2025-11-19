@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { createInsumo } from "@api/insumos.api";
 import type { Insumo } from "@utils/InventoryUtils";
 
 const CreateInputs = () => {
@@ -28,21 +29,21 @@ const CreateInputs = () => {
 
   const onSubmit = async (data: Insumo) => {
     try {
-      // TODO: Enviar datos al backend
-      // const response = await fetch('/api/insumos', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(data)
-      // });
-      // const result = await response.json();
+      // Determinar alerta automáticamente
+      const insumoData = {
+        ...data,
+        alerta: data.stock <= data.minimo_stock * 0.5,
+      };
+
+      await createInsumo(insumoData);
       
-      console.log('Insumo creado:', data);
-      alert('Insumo registrado exitosamente');
+      alert('Insumo registrado exitosamente ✅');
       reset();
       navigate('/dashboard/inventario');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al crear insumo:', error);
-      alert('Error al registrar el insumo');
+      const errorMessage = error.response?.data?.error || 'Error al registrar el insumo';
+      alert(errorMessage + ' ❌');
     }
   };
 

@@ -2,29 +2,46 @@ import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
 import ModalCategories from "@components/products/ModalCategories";
 import { useNavigate } from "react-router-dom";
-import type { InsumoReceta } from "@utils/InventoryUtils";
-import type { ProductFormData } from "@utils/CreateProductsUtil";
-import type { Category } from "@utils/CategoryUtils";
+import { getCategorias } from "@api/categorias.api";
+import { createProducto } from "@api/productos.api";
+import { getInsumos } from "@api/insumos.api";
+import type { Categoria } from "@utils/CategoryUtils";
+import type { InsumoReceta, ProductoFormData } from "@utils/CreateProductsUtil";
+import type { Insumo } from "@utils/InventoryUtils";
 
 const CreateProducts = () => {
   const navigate = useNavigate();
   const [isModalCategoriesOpen, setIsModalCategoriesOpen] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Categoria[]>([]);
+  const [insumosDisponibles, setInsumosDisponibles] = useState<Insumo[]>([]);
   const [insumos, setInsumos] = useState<InsumoReceta[]>([]);
   const [newInsumo, setNewInsumo] = useState({ id_insumo: 0, cantidad_usada: 0 });
 
-  // TODO: Conectar con API para obtener categorías
+  // Cargar categorías desde la API
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('/api/categorias');
-        const data = await response.json();
+        const data = await getCategorias();
         setCategories(data);
       } catch (error) {
         console.error('Error al cargar categorías:', error);
+        alert('Error al cargar las categorías');
       }
     };
     fetchCategories();
+  }, []);
+
+  // Cargar insumos disponibles
+  useEffect(() => {
+    const fetchInsumos = async () => {
+      try {
+        const data = await getInsumos();
+        setInsumosDisponibles(data);
+      } catch (error) {
+        console.error('Error al cargar insumos:', error);
+      }
+    };
+    fetchInsumos();
   }, []);
 
   const {
@@ -32,10 +49,9 @@ const CreateProducts = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-  } = useForm<ProductFormData>({
+  } = useForm<ProductoFormData>({
     defaultValues: {
       id_categoria: 0,
-      id_empleado: 1, // TODO: Obtener del usuario logueado
       nombre: "",
       tipo: "",
       precio: 0,
@@ -44,37 +60,49 @@ const CreateProducts = () => {
     },
   });
 
-  const onSubmit = async (data: ProductFormData) => {
+  const onSubmit = async (data: ProductoFormData) => {
     try {
+      // Obtener el id_empleado del usuario logueado
+      const userStr = localStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      const id_empleado = user?.empleado?.id_empleado;
+
+      if (!id_empleado) {
+        alert("No se pudo obtener la información del empleado. Por favor, inicia sesión nuevamente.");
+        return;
+      }
+
       const productData = {
         ...data,
+        id_empleado,
         receta: insumos,
       };
       
-      console.log("Producto a guardar:", productData);
+      await createProducto(productData);
       
-      // TODO: Enviar a la API
-      // const response = await fetch('/api/productos', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(productData)
-      // });
-      // const result = await response.json();
-      
-      alert("Producto creado exitosamente");
+      alert("Producto creado exitosamente ✅");
       reset();
       setInsumos([]);
       navigate('/dashboard/productos');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error al crear producto:", error);
-      alert("Error al crear el producto");
+      const errorMessage = error.response?.data?.error || "Error al crear el producto";
+      alert(errorMessage + " ❌");
     }
   };
 
   const addInsumo = () => {
     if (newInsumo.id_insumo > 0 && newInsumo.cantidad_usada > 0) {
+      // Verificar si el insumo existe
+      const insumoExiste = insumosDisponibles.find(i => i.id_insumo === newInsumo.id_insumo);
+      if (!insumoExiste) {
+        alert("El insumo seleccionado no existe");
+        return;
+      }
       setInsumos([...insumos, newInsumo]);
       setNewInsumo({ id_insumo: 0, cantidad_usada: 0 });
+    } else {
+      alert("Por favor completa todos los campos del insumo");
     }
   };
 
@@ -224,21 +252,26 @@ const CreateProducts = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ID Insumo
+                  Insumo
                 </label>
-                <input
-                  type="number"
+                <select
                   value={newInsumo.id_insumo}
                   onChange={(e) =>
                     setNewInsumo({ ...newInsumo, id_insumo: Number(e.target.value) })
                   }
-                  placeholder="Ej: 3"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                >
+                  <option value={0}>Seleccionar insumo</option>
+                  {insumosDisponibles.map((insumo) => (
+                    <option key={insumo.id_insumo} value={insumo.id_insumo}>
+                      {insumo.nombre} ({insumo.unidad_medida})
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cantidad (L/kg)
+                  Cantidad
                 </label>
                 <input
                   type="number"
@@ -269,26 +302,31 @@ const CreateProducts = () => {
                   Insumos Agregados
                 </h3>
                 <div className="space-y-2">
-                  {insumos.map((insumo, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                    >
-                      <div>
-                        <span className="font-medium">ID: {insumo.id_insumo}</span>
-                        <span className="text-gray-600 ml-4">
-                          Cantidad: {insumo.cantidad_usada} L/kg
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeInsumo(index)}
-                        className="text-red-500 hover:text-red-700"
+                  {insumos.map((insumo, index) => {
+                    const insumoData = insumosDisponibles.find(i => i.id_insumo === insumo.id_insumo);
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                       >
-                        Eliminar
-                      </button>
-                    </div>
-                  ))}
+                        <div>
+                          <span className="font-medium">
+                            {insumoData ? insumoData.nombre : `ID: ${insumo.id_insumo}`}
+                          </span>
+                          <span className="text-gray-600 ml-4">
+                            Cantidad: {insumo.cantidad_usada} {insumoData?.unidad_medida || ''}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeInsumo(index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

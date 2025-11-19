@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getInsumos, updateInsumo } from '@api/insumos.api';
 import type { Insumo } from '@utils/InventoryUtils';
 import ModalEditInputs from '@components/inventory/ModalEditInputs';
 
@@ -13,20 +14,15 @@ const ListInventory = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedInsumo, setSelectedInsumo] = useState<Insumo | null>(null);
 
-  // TODO: Cargar insumos desde la API
+  // Cargar insumos desde la API
   useEffect(() => {
     const fetchInsumos = async () => {
       try {
-        // const response = await fetch('/api/insumos');
-        // const data = await response.json();
-        // const mappedInsumos = data.map((insumo: Insumo) => ({
-        //   ...insumo,
-        //   image: getInsumoImage(insumo.nombre),
-        //   status: getInsumoStatus(insumo.cantidad_disponible, insumo.cantidad_minima)
-        // }));
-        // setInsumos(mappedInsumos);
+        const data = await getInsumos();
+        setInsumos(data);
       } catch (error) {
         console.error('Error al cargar insumos:', error);
+        alert('Error al cargar los insumos');
       }
     };
     fetchInsumos();
@@ -82,18 +78,22 @@ const ListInventory = () => {
   };
 
   // Guardar cambios del insumo
-  const handleSaveInsumo = (updatedInsumo: Insumo) => {
-    setInsumos(prevInsumos => 
-      prevInsumos.map(insumo => 
-        insumo.id_insumo === updatedInsumo.id_insumo ? updatedInsumo : insumo
-      )
-    );
-    // TODO: Enviar actualización al backend
-    // await fetch(`/api/insumos/${updatedInsumo.id_insumo}`, {
-    //   method: 'PUT',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(updatedInsumo)
-    // });
+  const handleSaveInsumo = async (updatedInsumo: Insumo) => {
+    try {
+      if (updatedInsumo.id_insumo) {
+        await updateInsumo(updatedInsumo.id_insumo, updatedInsumo);
+        setInsumos(prevInsumos => 
+          prevInsumos.map(insumo => 
+            insumo.id_insumo === updatedInsumo.id_insumo ? updatedInsumo : insumo
+          )
+        );
+        alert('Insumo actualizado exitosamente ✅');
+      }
+    } catch (error: any) {
+      console.error('Error al actualizar insumo:', error);
+      const errorMessage = error.response?.data?.error || 'Error al actualizar el insumo';
+      alert(errorMessage + ' ❌');
+    }
   };
 
   // Cerrar modal
