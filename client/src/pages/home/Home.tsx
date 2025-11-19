@@ -127,16 +127,19 @@ const Home = () => {
       </div>
 
       {/* Acciones rápidas y alertas */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-6">
         {/* Acciones rápidas */}
         <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm">
           <h2 className="text-xl font-display font-bold text-primary-dark mb-4">
             Acciones Rápidas
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <button className="flex flex-col items-center justify-center p-6 rounded-xl bg-linear-to-br from-button to-button-hover hover:shadow-lg transition-all group cursor-pointer">
+            <button
+              onClick={() => navigate("/dashboard/inventario")}
+              className="flex flex-col items-center justify-center p-6 rounded-xl bg-linear-to-br from-button to-button-hover hover:shadow-lg transition-all group cursor-pointer"
+            >
               <svg
-                className="w-8 h-8 text-white mb-2"
+                className="w-8 h-8 text-gray-600 mb-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -145,12 +148,10 @@ const Home = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M12 4v16m8-8H4"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
                 />
               </svg>
-              <span className="text-white font-medium text-sm">
-                Nueva Venta
-              </span>
+              <span className="text-white font-medium text-sm">Inventario</span>
             </button>
 
             <button
@@ -174,64 +175,6 @@ const Home = () => {
                 Agregar Producto
               </span>
             </button>
-
-            <button className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-secondary hover:border-button hover:bg-button/5 transition-all cursor-pointer">
-              <svg
-                className="w-8 h-8 text-gray-600 mb-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              <span className="text-gray-700 font-medium text-sm">
-                Ver Reportes
-              </span>
-            </button>
-
-            <button className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-secondary hover:border-button hover:bg-button/5 transition-all cursor-pointer">
-              <svg
-                className="w-8 h-8 text-gray-600 mb-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                />
-              </svg>
-              <span className="text-gray-700 font-medium text-sm">
-                Inventario
-              </span>
-            </button>
-
-            <button className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-secondary hover:border-button hover:bg-button/5 transition-all cursor-pointer">
-              <svg
-                className="w-8 h-8 text-gray-600 mb-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-              <span className="text-gray-700 font-medium text-sm">
-                Cerrar Caja
-              </span>
-            </button>
-
             <button className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-secondary hover:border-button hover:bg-button/5 transition-all cursor-pointer">
               <svg
                 className="w-8 h-8 text-gray-600 mb-2"
@@ -246,9 +189,7 @@ const Home = () => {
                   d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
                 />
               </svg>
-              <span className="text-gray-700 font-medium text-sm">
-                Clientes
-              </span>
+              <span className="text-gray-700 font-medium text-sm">Cajeros</span>
             </button>
           </div>
         </div>
@@ -289,37 +230,7 @@ const Home = () => {
               </span>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                <div>
-                  <p className="text-sm font-medium text-gray-800">
-                    Jarabe Limón
-                  </p>
-                  <p className="text-xs text-gray-500">Stock: 8 unidades</p>
-                </div>
-              </div>
-              <span className="text-xs bg-orange-500 text-white px-2 py-1 rounded-full">
-                Bajo
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                <div>
-                  <p className="text-sm font-medium text-gray-800">
-                    Tapas Vasos
-                  </p>
-                  <p className="text-xs text-gray-500">Stock: 12 unidades</p>
-                </div>
-              </div>
-              <span className="text-xs bg-orange-500 text-white px-2 py-1 rounded-full">
-                Bajo
-              </span>
-            </div>
-
-            <button className="w-full mt-4 py-2 text-sm font-medium text-button hover:text-button-hover transition-colors cursor-pointer">
+            <button onClick={() => navigate("/dashboard/productos")} className="w-full mt-4 py-2 text-sm font-medium text-button hover:text-button-hover transition-colors cursor-pointer">
               Ver todos los productos →
             </button>
           </div>
