@@ -1,9 +1,29 @@
+//-------------------------------------------
+// CONTROLLER DE USUARIOS (versión final)
+//-------------------------------------------
 import { pool } from "../config/db.js";
+import bcrypt from "bcrypt";
 
-// ✅ Obtener todos los usuarios
+// 🟢 Obtener todos los usuarios con datos del empleado
 export const getUsuarios = async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM usuarios ORDER BY id_usuario ASC");
+    const result = await pool.query(`
+      SELECT 
+        u.id_usuario,
+        u.nombre,
+        u.correo,
+        u.telefono,
+        u.rol,
+        u.fecha_creacion,
+        e.id_empleado,
+        e.fecha_nacimiento,
+        e.fecha_inicio,
+        e.activo
+      FROM usuarios u
+      LEFT JOIN empleados e ON e.id_usuario = u.id_usuario
+      ORDER BY u.id_usuario ASC
+    `);
+
     res.json(result.rows);
   } catch (error) {
     console.error("Error en getUsuarios:", error);
@@ -11,11 +31,30 @@ export const getUsuarios = async (req, res) => {
   }
 };
 
-// ✅ Obtener usuario por ID
+// 🟢 Obtener usuario por ID (con datos del empleado)
 export const getUsuarioById = async (req, res) => {
   const { id } = req.params;
+
   try {
-    const result = await pool.query("SELECT * FROM usuarios WHERE id_usuario = $1", [id]);
+    const result = await pool.query(
+      `
+      SELECT 
+        u.id_usuario,
+        u.nombre,
+        u.correo,
+        u.telefono,
+        u.rol,
+        u.fecha_creacion,
+        e.id_empleado,
+        e.fecha_nacimiento,
+        e.fecha_inicio,
+        e.activo
+      FROM usuarios u
+      LEFT JOIN empleados e ON e.id_usuario = u.id_usuario
+      WHERE u.id_usuario = $1
+      `,
+      [id]
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Usuario no encontrado" });
@@ -28,39 +67,73 @@ export const getUsuarioById = async (req, res) => {
   }
 };
 
-// ✅ Crear nuevo usuario
+// 🟢 Crear usuario + crear empleado automáticamente
 export const createUsuario = async (req, res) => {
-  const { id_usuario, nombre, telefono, correo } = req.body;
+  const { id_usuario, nombre, telefono, correo, contrasena, rol, fecha_nacimiento } = req.body;
 
-  if (!id_usuario || !nombre || !correo) {
-    return res.status(400).json({ error: "Faltan campos requeridos: id_usuario, nombre, correo" });
+  if (!id_usuario || !nombre || !correo || !contrasena) {
+    return res.status(400).json({
+      error: "Faltan campos requeridos: id_usuario, nombre, correo, contrasena",
+    });
   }
 
   try {
     // Verificar si el correo ya existe
-    const check = await pool.query("SELECT id_usuario FROM usuarios WHERE correo = $1", [correo]);
+    const check = await pool.query(
+      "SELECT id_usuario FROM usuarios WHERE correo = $1",
+      [correo]
+    );
     if (check.rows.length > 0) {
       return res.status(400).json({ error: "El correo ya está registrado" });
     }
 
-    const result = await pool.query(
-      `INSERT INTO usuarios (id_usuario, nombre, telefono, correo, fecha_creacion)
-       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
-       RETURNING *`,
-      [id_usuario, nombre, telefono || null, correo]
+    // Encriptar contraseña
+    const hashedPassword = await bcrypt.hash(contrasena, 10);
+
+    // === Transacción para crear usuario + empleado ===
+    await pool.query("BEGIN");
+
+    const newUser = await pool.query(
+      `
+      INSERT INTO usuarios (id_usuario, nombre, telefono, correo, contrasena, rol, fecha_creacion)
+      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+      RETURNING *
+      `,
+      [
+        id_usuario,
+        nombre,
+        telefono || null,
+        correo,
+        hashedPassword,
+        rol || "cajero",
+      ]
     );
 
+    // Crear empleado automáticamente
+    const newEmployee = await pool.query(
+      `
+      INSERT INTO empleados (id_usuario, fecha_nacimiento)
+      VALUES ($1, $2)
+      RETURNING *
+      `,
+      [id_usuario, fecha_nacimiento || null]
+    );
+
+    await pool.query("COMMIT");
+
     res.status(201).json({
-      message: "Usuario creado correctamente ✅",
-      usuario: result.rows[0],
+      message: "Usuario y empleado creados correctamente ✅",
+      usuario: newUser.rows[0],
+      empleado: newEmployee.rows[0],
     });
   } catch (error) {
+    await pool.query("ROLLBACK");
     console.error("Error en createUsuario:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
-// ✅ Actualizar usuario
+// 🟢 Actualizar usuario
 export const updateUsuario = async (req, res) => {
   const { id } = req.params;
   const payload = req.body;
@@ -70,13 +143,28 @@ export const updateUsuario = async (req, res) => {
   }
 
   try {
-    const fields = Object.keys(payload)
-      .map((key, i) => `${key} = $${i + 1}`)
-      .join(", ");
-    const values = Object.values(payload);
+    let fields = [];
+    let values = [];
+    let i = 1;
+
+    for (const [key, value] of Object.entries(payload)) {
+      if (key === "contrasena") {
+        const hash = await bcrypt.hash(value, 10);
+        fields.push(`contrasena = $${i++}`);
+        values.push(hash);
+      } else {
+        fields.push(`${key} = $${i++}`);
+        values.push(value);
+      }
+    }
 
     const result = await pool.query(
-      `UPDATE usuarios SET ${fields} WHERE id_usuario = $${values.length + 1} RETURNING *`,
+      `
+      UPDATE usuarios
+      SET ${fields.join(", ")}
+      WHERE id_usuario = $${i}
+      RETURNING *
+      `,
       [...values, id]
     );
 
@@ -94,13 +182,13 @@ export const updateUsuario = async (req, res) => {
   }
 };
 
-// ✅ Eliminar usuario
+// 🟢 Eliminar usuario (borra también el empleado por CASCADE)
 export const deleteUsuario = async (req, res) => {
   const { id } = req.params;
 
   try {
     const result = await pool.query(
-      "DELETE FROM usuarios WHERE id_usuario = $1 RETURNING *",
+      "DELETE FROM usuarios WHERE id_usuario = $1 RETURNING id_usuario",
       [id]
     );
 
@@ -108,7 +196,7 @@ export const deleteUsuario = async (req, res) => {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
 
-    res.json({ message: "Usuario eliminado correctamente ✅" });
+    res.json({ message: "Usuario y empleado eliminados correctamente ✅" });
   } catch (error) {
     console.error("Error en deleteUsuario:", error);
     res.status(500).json({ error: error.message });
