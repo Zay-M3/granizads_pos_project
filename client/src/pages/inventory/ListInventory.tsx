@@ -89,9 +89,9 @@ const ListInventory = () => {
         );
         alert('Insumo actualizado exitosamente ✅');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error al actualizar insumo:', error);
-      const errorMessage = error.response?.data?.error || 'Error al actualizar el insumo';
+      const errorMessage = (error as { response?: { data?: { error?: string } } }).response?.data?.error || 'Error al actualizar el insumo';
       alert(errorMessage + ' ❌');
     }
   };

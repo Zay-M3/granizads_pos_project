@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { CashierFormData } from '@utils/admin/CreateCashierUtils';
+import type { UsuarioFormData } from '@utils/admin/CreateCashierUtils';
 import ConfirmAction from '@components/ConfirmAction';
 
 const ListCashier = () => {
   const navigate = useNavigate();
-  const [cajeros, setCajeros] = useState<CashierFormData[]>([]);
+  const [cajeros, setCajeros] = useState<UsuarioFormData[]>([]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRol, setSelectedRol] = useState('all');
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [cajeroToDelete, setCajeroToDelete] = useState<CashierFormData | null>(null);
+  const [cajeroToDelete, setCajeroToDelete] = useState<UsuarioFormData | null>(null);
 
   // TODO: Cargar cajeros desde la API
   useEffect(() => {
@@ -43,7 +43,8 @@ const ListCashier = () => {
   };
 
   // Calcular edad
-  const calcularEdad = (fechaNacimiento: string) => {
+  const calcularEdad = (fechaNacimiento?: string) => {
+    if (!fechaNacimiento) return 0;
     const hoy = new Date();
     const nacimiento = new Date(fechaNacimiento);
     let edad = hoy.getFullYear() - nacimiento.getFullYear();
@@ -55,7 +56,7 @@ const ListCashier = () => {
   };
 
   // Abrir modal de confirmación
-  const handleDeleteClick = (cajero: CashierFormData) => {
+  const handleDeleteClick = (cajero: UsuarioFormData) => {
     setCajeroToDelete(cajero);
     setIsConfirmOpen(true);
   };
@@ -194,8 +195,8 @@ const ListCashier = () => {
                 </td>
                 <td className="px-6 py-4">
                   <div>
-                    <p className="font-medium text-gray-800">{calcularEdad(cajero.fecha_nacimiento)} años</p>
-                    <p className="text-xs text-gray-500">{cajero.fecha_nacimiento}</p>
+                    <p className="font-medium text-gray-800">{cajero.fecha_nacimiento ? calcularEdad(cajero.fecha_nacimiento) : 0} años</p>
+                    <p className="text-xs text-gray-500">{cajero.fecha_nacimiento || '---'}</p>
                   </div>
                 </td>
                 <td className="px-6 py-4">

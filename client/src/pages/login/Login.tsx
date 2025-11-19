@@ -33,9 +33,9 @@ const Login: React.FC = () => {
 
       alert(`Bienvenido ${response.user.nombre} ✅`);
       navigate("/dashboard/productos/crear");
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error en login:", err);
-      const errorMessage = err.response?.data?.error || "Error al iniciar sesión. Verifica tus credenciales.";
+      const errorMessage = (err as { response?: { data?: { error?: string } } }).response?.data?.error || "Error al iniciar sesión. Verifica tus credenciales.";
       alert(errorMessage + " ❌");
     }
   };
