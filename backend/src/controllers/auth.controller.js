@@ -1,3 +1,6 @@
+//-----------------------------------------------------
+// LOGIN (versión final con modelo actualizado)
+//-----------------------------------------------------
 import { pool } from "../config/db.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -6,17 +9,32 @@ export const login = async (req, res) => {
   const { correo, contrasena } = req.body;
 
   if (!correo || !contrasena) {
-    return res.status(400).json({ error: "Faltan campos requeridos (correo, contrasena)" });
+    return res.status(400).json({
+      error: "Faltan campos requeridos (correo, contrasena)"
+    });
   }
 
   try {
-    // Buscar usuario (JOIN con empleados si la contraseña está allí)
-    const result = await pool.query(`
-      SELECT u.id_usuario, u.nombre, u.correo, e.contrasena, e.rol
+    // Buscar usuario con JOIN hacia empleado
+    const result = await pool.query(
+      `
+      SELECT 
+        u.id_usuario,
+        u.nombre,
+        u.correo,
+        u.telefono,
+        u.contrasena,
+        u.rol,
+        e.id_empleado,
+        e.fecha_nacimiento,
+        e.fecha_inicio,
+        e.activo
       FROM usuarios u
-      JOIN empleados e ON u.id_usuario = e.id_usuario
+      LEFT JOIN empleados e ON u.id_usuario = e.id_usuario
       WHERE u.correo = $1
-    `, [correo]);
+      `,
+      [correo]
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Usuario no encontrado" });
@@ -24,20 +42,27 @@ export const login = async (req, res) => {
 
     const user = result.rows[0];
 
-    // ✅ Verifica que la contraseña sí exista
+    // Verificar si tiene contraseña
     if (!user.contrasena) {
-      return res.status(400).json({ error: "El usuario no tiene una contraseña registrada" });
+      return res.status(400).json({
+        error: "El usuario no tiene una contraseña registrada"
+      });
     }
 
-    // ✅ Compara la contraseña en texto con la encriptada
+    // Validar contraseña
     const isMatch = await bcrypt.compare(contrasena, user.contrasena);
     if (!isMatch) {
-      return res.status(401).json({ error: "Contraseña incorrecta" });
+      return res.status(401).json({
+        error: "Contraseña incorrecta"
+      });
     }
 
-    // ✅ Generar token JWT
+    // Crear token
     const token = jwt.sign(
-      { id: user.id_usuario, rol: user.rol },
+      {
+        id: user.id_usuario,
+        rol: user.rol
+      },
       process.env.JWT_SECRET,
       { expiresIn: "8h" }
     );
@@ -49,8 +74,15 @@ export const login = async (req, res) => {
         id_usuario: user.id_usuario,
         nombre: user.nombre,
         correo: user.correo,
+        telefono: user.telefono,
         rol: user.rol,
-      },
+        empleado: {
+          id_empleado: user.id_empleado,
+          fecha_nacimiento: user.fecha_nacimiento,
+          fecha_inicio: user.fecha_inicio,
+          activo: user.activo
+        }
+      }
     });
 
   } catch (error) {

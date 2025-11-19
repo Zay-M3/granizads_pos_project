@@ -1,35 +1,36 @@
 import { pool } from "../config/db.js";
 
-// Obtener todos los clientes (con datos de usuario join)
+// ========================================
+// Obtener todos los clientes
+// ========================================
 export const getClientes = async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT c.*, u.*
-      FROM clientes c
-      LEFT JOIN usuarios u ON c.id_usuario = u.id_usuario
-      ORDER BY c.id_cliente ASC
+      SELECT *
+      FROM clientes
+      ORDER BY id_cliente ASC
     `);
-    const data = result.rows;
-    res.json(data);
+
+    res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Obtener cliente por id
+// ========================================
+// Obtener cliente por ID
+// ========================================
 export const getClienteById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = await pool.query(`
-      SELECT c.*, u.*
-      FROM clientes c
-      LEFT JOIN usuarios u ON c.id_usuario = u.id_usuario
-      WHERE c.id_cliente = $1
-    `, [id]);
+    const result = await pool.query(
+      `SELECT * FROM clientes WHERE id_cliente = $1`,
+      [id]
+    );
 
     const data = result.rows[0];
-    if (!data) return res.status(404).json({ error: 'Cliente no encontrado' });
+    if (!data) return res.status(404).json({ error: "Cliente no encontrado" });
 
     res.json(data);
   } catch (error) {
@@ -37,68 +38,91 @@ export const getClienteById = async (req, res) => {
   }
 };
 
-// Crear cliente (suponer que usuario ya existe o crear referencia)
+// ========================================
+// Crear cliente
+// ========================================
 export const createCliente = async (req, res) => {
-  const { id_usuario, cedula } = req.body;
+  const { cedula, nombre } = req.body;
 
-  if (!id_usuario) return res.status(400).json({ error: 'id_usuario requerido' });
+  if (!cedula || !nombre)
+    return res
+      .status(400)
+      .json({ error: "cedula y nombre son obligatorios" });
 
   try {
     const result = await pool.query(
-      `INSERT INTO clientes (id_usuario, cedula)
+      `INSERT INTO clientes (cedula, nombre)
        VALUES ($1, $2)
        RETURNING *`,
-      [id_usuario, cedula]
+      [cedula, nombre]
     );
 
-    const data = result.rows[0];
-    res.status(201).json(data);
+    res.status(201).json(result.rows[0]);
   } catch (error) {
+    if (error.code === "23505")
+      return res.status(400).json({ error: "La cédula ya está registrada" });
+
     res.status(500).json({ error: error.message });
   }
 };
 
+// ========================================
 // Actualizar cliente
+// ========================================
 export const updateCliente = async (req, res) => {
   const { id } = req.params;
-  const payload = req.body;
+  const data = req.body;
 
   try {
-    // construir consulta dinámica según campos enviados
-    const keys = Object.keys(payload);
-    const values = Object.values(payload);
-    const setClause = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
+    const keys = Object.keys(data);
+    const values = Object.values(data);
+
+    if (keys.length === 0)
+      return res.status(400).json({ error: "No se enviaron campos a actualizar" });
+
+    const setClause = keys
+      .map((key, i) => `${key} = $${i + 1}`)
+      .join(", ");
 
     const result = await pool.query(
-      `UPDATE clientes SET ${setClause} WHERE id_cliente = $${keys.length + 1} RETURNING *`,
+      `UPDATE clientes SET ${setClause} 
+       WHERE id_cliente = $${keys.length + 1}
+       RETURNING *`,
       [...values, id]
     );
 
     if (result.rows.length === 0)
       return res.status(404).json({ error: "Cliente no encontrado" });
 
-    const data = result.rows[0];
-    res.json({ message: "Cliente actualizado", data });
+    res.json({
+      message: "Cliente actualizado correctamente",
+      data: result.rows[0],
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
+// ========================================
 // Eliminar cliente
+// ========================================
 export const deleteCliente = async (req, res) => {
   const { id } = req.params;
 
   try {
     const result = await pool.query(
-      "DELETE FROM clientes WHERE id_cliente = $1 RETURNING *",
+      `DELETE FROM clientes 
+       WHERE id_cliente = $1 
+       RETURNING *`,
       [id]
     );
 
     if (result.rowCount === 0)
       return res.status(404).json({ error: "Cliente no encontrado" });
 
-    res.json({ message: "Cliente eliminado" });
+    res.json({ message: "Cliente eliminado correctamente" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
