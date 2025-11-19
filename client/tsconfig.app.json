@@ -30,7 +30,8 @@
       "@utils/*": ["src/utils/*"],
       "@components/*": ["src/components/*"],
       "@hooks/*": ["src/hooks/*"],
+      "@api/*": ["api/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "api"]
 }

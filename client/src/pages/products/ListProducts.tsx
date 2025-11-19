@@ -2,144 +2,108 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ModalEditProduct from '@components/products/ModalEditProduct';
 import ConfirmAction from '@components/ConfirmAction';
-import type { Category } from '@utils/CategoryUtils';
-import type { ProductFormData } from '@utils/CreateProductsUtil';
+import { getProductos, deleteProducto } from '@api/productos.api';
+import { getCategorias } from '@api/categorias.api';
+import type { Producto } from '@utils/CreateProductsUtil';
+import type { Categoria } from '@utils/CategoryUtils';
 
 const ListProducts = () => {
   const navigate = useNavigate();
-  const [products, setProducts] = useState<(ProductFormData & {
-    id_producto?: number;
-    category?: string;
-    stock?: number;
-    image?: string;
-    status?: 'available' | 'low-stock' | 'out-of-stock';
-  })[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Producto[]>([]);
+  const [categories, setCategories] = useState<Categoria[]>([]);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<(ProductFormData & {
-    id_producto?: number;
-    category?: string;
-    stock?: number;
-    image?: string;
-    status?: 'available' | 'low-stock' | 'out-of-stock';
-  }) | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<(ProductFormData & {
-    id_producto?: number;
-    category?: string;
-    stock?: number;
-    image?: string;
-    status?: 'available' | 'low-stock' | 'out-of-stock';
-  }) | null>(null);
+  const [productToDelete, setProductToDelete] = useState<Producto | null>(null);
 
-  // TODO: Cargar categorías desde la API
+  // Cargar categorías desde la API
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('/api/categorias');
-        const data = await response.json();
+        const data = await getCategorias();
         setCategories(data);
       } catch (error) {
         console.error('Error al cargar categorías:', error);
+        alert('Error al cargar las categorías');
       }
     };
     fetchCategories();
   }, []);
 
-  // TODO: Cargar productos desde la API
+  // Cargar productos desde la API
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('/api/productos');
-        const data = await response.json();
-        // Mapear los datos con campos calculados
-        const mappedProducts = data.map((product: ProductFormData & { id_producto?: number }) => ({
-          ...product,
-          category: categories.find(c => c.id_categoria === product.id_categoria)?.nombre,
-          // TODO: Implementar cálculo de stock desde inventario
-          stock: 0,
-          // TODO: Implementar asignación de imagen según tipo
-          image: '🍹',
-          // TODO: Implementar cálculo de estado según stock
-          status: 'available' as 'available' | 'low-stock' | 'out-of-stock'
-        }));
-        setProducts(mappedProducts);
+        const data = await getProductos();
+        setProducts(data);
       } catch (error) {
         console.error('Error al cargar productos:', error);
+        alert('Error al cargar los productos');
       }
     };
-    if (categories.length > 0) {
-      fetchProducts();
-    }
-  }, [categories]);
+    fetchProducts();
+  }, []);
 
   // Filtrar productos
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.nombre.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || product.categoria_nombre === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  // Obtener badge de estado
-  const getStatusBadge = (status?: 'available' | 'low-stock' | 'out-of-stock') => {
-    switch (status) {
-      case 'available':
-        return <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">Disponible</span>;
-      case 'low-stock':
-        return <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">Stock Bajo</span>;
-      case 'out-of-stock':
-        return <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">Agotado</span>;
-    }
+  // Obtener icono basado en el tipo de producto
+  const getProductIcon = (tipo: string) => {
+    const tipoLower = tipo.toLowerCase();
+    if (tipoLower.includes('coctel') || tipoLower.includes('cóctel')) return '🍹';
+    if (tipoLower.includes('cerveza')) return '🍺';
+    if (tipoLower.includes('vino')) return '🍷';
+    if (tipoLower.includes('licor')) return '🥃';
+    if (tipoLower.includes('refresco') || tipoLower.includes('gaseosa')) return '🥤';
+    if (tipoLower.includes('agua')) return '💧';
+    if (tipoLower.includes('café') || tipoLower.includes('cafe')) return '☕';
+    return '🍹'; // default: coctel
+  };
+
+  // Obtener badge de estado (simplificado sin stock)
+  const getStatusBadge = () => {
+    return <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">Disponible</span>;
   };
 
   // Manejar edición de producto
-  const handleEditProduct = (product: ProductFormData & {
-    id_producto?: number;
-    category?: string;
-    stock?: number;
-    image?: string;
-    status?: 'available' | 'low-stock' | 'out-of-stock';
-  }) => {
+  const handleEditProduct = (product: Producto) => {
     setSelectedProduct(product);
     setIsEditModalOpen(true);
   };
 
   // Guardar cambios del producto
-  const handleSaveProduct = (updatedProduct: ProductFormData & {
-    id_producto?: number;
-    category?: string;
-    stock?: number;
-    image?: string;
-    status?: 'available' | 'low-stock' | 'out-of-stock';
-  }) => {
+  const handleSaveProduct = (updatedProduct: Producto) => {
     setProducts(prevProducts =>
       prevProducts.map(p => p.id_producto === updatedProduct.id_producto ? updatedProduct : p)
     );
   };
 
   // Abrir modal de confirmación
-  const handleDeleteClick = (product: ProductFormData & {
-    id_producto?: number;
-    category?: string;
-    stock?: number;
-    image?: string;
-    status?: 'available' | 'low-stock' | 'out-of-stock';
-  }) => {
+  const handleDeleteClick = (product: Producto) => {
     setProductToDelete(product);
     setIsConfirmOpen(true);
   };
 
   // Confirmar eliminación
-  const handleConfirmDelete = () => {
-    if (productToDelete) {
-      // TODO: Eliminar del backend
-      // await fetch(`/api/productos/${productToDelete.id_producto}`, { method: 'DELETE' });
-      setProducts(prevProducts => prevProducts.filter(p => p.id_producto !== productToDelete.id_producto));
-      console.log('Producto eliminado:', productToDelete.id_producto);
+  const handleConfirmDelete = async () => {
+    if (productToDelete && productToDelete.id_producto) {
+      try {
+        await deleteProducto(productToDelete.id_producto);
+        setProducts(prevProducts => prevProducts.filter(p => p.id_producto !== productToDelete.id_producto));
+        alert('Producto eliminado exitosamente ✅');
+      } catch (error: any) {
+        console.error('Error al eliminar producto:', error);
+        const errorMessage = error.response?.data?.error || 'Error al eliminar el producto';
+        alert(errorMessage + ' ❌');
+      }
     }
   };
 
@@ -174,21 +138,19 @@ const ListProducts = () => {
           <p className="text-2xl font-bold text-primary-dark mt-1">{products.length}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
-          <p className="text-sm text-gray-500 font-medium">Disponibles</p>
+          <p className="text-sm text-gray-500 font-medium">Categorías</p>
+          <p className="text-2xl font-bold text-blue-600 mt-1">{categories.length}</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-sm text-gray-500 font-medium">Con Receta</p>
           <p className="text-2xl font-bold text-green-600 mt-1">
-            {products.filter(p => p.status === 'available').length}
+            {products.filter(p => p.total_ingredientes && p.total_ingredientes > 0).length}
           </p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
-          <p className="text-sm text-gray-500 font-medium">Stock Bajo</p>
-          <p className="text-2xl font-bold text-orange-600 mt-1">
-            {products.filter(p => p.status === 'low-stock').length}
-          </p>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm">
-          <p className="text-sm text-gray-500 font-medium">Agotados</p>
-          <p className="text-2xl font-bold text-red-600 mt-1">
-            {products.filter(p => p.status === 'out-of-stock').length}
+          <p className="text-sm text-gray-500 font-medium">Precio Promedio</p>
+          <p className="text-2xl font-bold text-purple-600 mt-1">
+            ${products.length > 0 ? (products.reduce((sum, p) => sum + p.precio, 0) / products.length).toFixed(2) : '0.00'}
           </p>
         </div>
       </div>
@@ -259,7 +221,7 @@ const ListProducts = () => {
             >
               {/* Imagen del producto */}
               <div className="h-40 bg-linear-to-br from-primary/10 to-card/10 flex items-center justify-center">
-                <span className="text-6xl">{product.image}</span>
+                <span className="text-6xl">{getProductIcon(product.tipo)}</span>
               </div>
 
               {/* Información */}
@@ -269,15 +231,15 @@ const ListProducts = () => {
                     <h3 className="font-bold text-lg text-gray-800 group-hover:text-primary transition-colors">
                       {product.nombre}
                     </h3>
-                    <p className="text-sm text-gray-500">{product.category}</p>
+                    <p className="text-sm text-gray-500">{product.categoria_nombre || 'Sin categoría'}</p>
                   </div>
-                  {getStatusBadge(product.status!)}
+                  {getStatusBadge()}
                 </div>
 
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-secondary">
                   <div>
                     <p className="text-2xl font-bold text-primary">${product.precio.toLocaleString()}</p>
-                    <p className="text-xs text-gray-500">Stock: {product.stock}</p>
+                    <p className="text-xs text-gray-500">{product.tipo}</p>
                   </div>
                   <div className="flex space-x-2">
                     <button 
@@ -311,7 +273,7 @@ const ListProducts = () => {
                 <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Producto</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Categoría</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Precio</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Stock</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Receta</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Estado</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Acciones</th>
               </tr>
@@ -321,18 +283,21 @@ const ListProducts = () => {
                 <tr key={product.id_producto} className="hover:bg-secondary/20 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
-                      <span className="text-3xl">{product.image}</span>
-                      <span className="font-medium text-gray-800">{product.nombre}</span>
+                      <span className="text-3xl">{getProductIcon(product.tipo)}</span>
+                      <div>
+                        <span className="font-medium text-gray-800 block">{product.nombre}</span>
+                        <span className="text-sm text-gray-500">{product.tipo}</span>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-600">{product.category}</td>
+                  <td className="px-6 py-4 text-gray-600">{product.categoria_nombre || 'Sin categoría'}</td>
                   <td className="px-6 py-4">
                     <span className="font-bold text-primary">${product.precio.toLocaleString()}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="font-medium text-gray-700">{product.stock}</span>
+                    <span className="font-medium text-gray-700">{product.total_ingredientes || 0} ingredientes</span>
                   </td>
-                  <td className="px-6 py-4">{getStatusBadge(product.status!)}</td>
+                  <td className="px-6 py-4">{getStatusBadge()}</td>
                   <td className="px-6 py-4">
                     <div className="flex space-x-2">
                       <button 

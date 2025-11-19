@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import type { CashierFormData } from "@utils/admin/CreateCashierUtils";
+import { createUsuario } from "@api/usuarios.api";
+import type { UsuarioFormData } from "@utils/admin/CreateCashierUtils";
 
 const CreateCashier = () => {
   const navigate = useNavigate();
@@ -10,8 +11,9 @@ const CreateCashier = () => {
     formState: { errors },
     watch,
     reset,
-  } = useForm<CashierFormData>({
+  } = useForm<UsuarioFormData>({
     defaultValues: {
+      id_usuario: 0,
       nombre: "",
       telefono: "",
       correo: "",
@@ -21,23 +23,25 @@ const CreateCashier = () => {
     },
   });
 
-  const onSubmit = async (data: CashierFormData) => {
+  const onSubmit = async (data: UsuarioFormData) => {
     try {
-      // TODO: Enviar datos al backend
-      // const response = await fetch('/api/usuarios', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(data)
-      // });
-      // const result = await response.json();
+      // Generar id_usuario único (timestamp simplificado)
+      const id_usuario = Number(Date.now().toString().slice(-9));
+      
+      const usuarioData = {
+        ...data,
+        id_usuario,
+      };
 
-      console.log("Cajero creado:", data);
-      alert("Cajero registrado exitosamente");
+      await createUsuario(usuarioData);
+
+      alert("Cajero registrado exitosamente ✅");
       reset();
-      // navigate('/dashboard/usuarios'); // Redirigir a lista de usuarios
-    } catch (error) {
+      navigate(-1);
+    } catch (error: any) {
       console.error("Error al crear cajero:", error);
-      alert("Error al registrar el cajero");
+      const errorMessage = error.response?.data?.error || "Error al registrar el cajero";
+      alert(errorMessage + " ❌");
     }
   };
 
@@ -163,6 +167,7 @@ const CreateCashier = () => {
                   {...register("fecha_nacimiento", {
                     required: "La fecha de nacimiento es obligatoria",
                     validate: (value) => {
+                      if (!value) return "La fecha de nacimiento es obligatoria";
                       const birthDate = new Date(value);
                       const today = new Date();
                       const age = today.getFullYear() - birthDate.getFullYear();

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { loginRequest } from "@api/auth.api";
+import type { LoginData } from "@utils/LoginUtils";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -13,28 +15,28 @@ const Login: React.FC = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:4000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ correo: email, contrasena: password }),
-      });
+      const loginData: LoginData = {
+        correo: email,
+        contrasena: password,
+      };
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.error || "Error al iniciar sesión ❌");
-        return;
-      }
+      const response = await loginRequest(loginData);
 
       // Guardar token y usuario en localStorage
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("token", response.token);
+      localStorage.setItem("user", JSON.stringify(response.user));
 
-      alert("Inicio de sesión exitoso ✅");
+      if (rememberMe) {
+        localStorage.setItem("rememberMe", "true");
+        localStorage.setItem("userEmail", email);
+      }
+
+      alert(`Bienvenido ${response.user.nombre} ✅`);
       navigate("/dashboard/productos/crear");
-    } catch (err) {
-      console.error(err);
-      alert("Error al conectar con el servidor");
+    } catch (err: any) {
+      console.error("Error en login:", err);
+      const errorMessage = err.response?.data?.error || "Error al iniciar sesión. Verifica tus credenciales.";
+      alert(errorMessage + " ❌");
     }
   };
 

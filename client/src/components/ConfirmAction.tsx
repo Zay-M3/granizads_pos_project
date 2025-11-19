@@ -97,7 +97,7 @@ const ConfirmAction = ({
         <div className="p-6">
           <div className="flex items-center space-x-4">
             {/* Icono */}
-            <div className={`flex-shrink-0 w-12 h-12 ${styles.iconBg} rounded-full flex items-center justify-center ${styles.iconColor}`}>
+            <div className={`shrink-0 w-12 h-12 ${styles.iconBg} rounded-full flex items-center justify-center ${styles.iconColor}`}>
               {styles.icon}
             </div>
             
