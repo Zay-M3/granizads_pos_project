@@ -259,7 +259,7 @@ const HomeEmployee = () => {
       {/* Tips para el cajero */}
       <div className="bg-linear-to-br from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-blue-200">
         <div className="flex items-start space-x-4">
-          <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center <shrink-0">
+          <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center shrink-0">
             <svg
               className="w-6 h-6 text-white"
               fill="none"
