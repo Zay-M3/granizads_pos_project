@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import type { Producto } from '@utils/CreateProductsUtil';
 import type { Categoria } from '@utils/CategoryUtils';
-import { updateProducto } from 'src/api/productos.api';
-import { getCategorias } from 'src/api/categorias.api';
+import { updateProducto } from '@api/productos.api';
+import { getCategorias } from '@api/categorias.api';
 
 interface ModalEditProductProps {
   isOpen: boolean;
@@ -103,9 +103,9 @@ const ModalEditProduct = ({ isOpen, onClose, product, onSave }: ModalEditProduct
         onSave(formData);
         alert('Producto actualizado exitosamente ✅');
         onClose();
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error al actualizar producto:', error);
-        const errorMessage = error.response?.data?.error || 'Error al actualizar el producto';
+        const errorMessage = (error as { response?: { data?: { error?: string } } }).response?.data?.error || 'Error al actualizar el producto';
         alert(errorMessage + ' ❌');
       }
     }
