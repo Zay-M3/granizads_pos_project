@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import type { Producto } from '@utils/CreateProductsUtil';
 import type { Categoria } from '@utils/CategoryUtils';
-import { updateProducto } from '@api/productos.api';
-import { getCategorias } from '@api/categorias.api';
+import { updateProducto } from 'src/api/productos.api';
+import { getCategorias } from 'src/api/categorias.api';
 
 interface ModalEditProductProps {
   isOpen: boolean;

@@ -1,7 +1,23 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const Home = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Verificar el rol del usuario y redirigir según corresponda
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.rol === "cajero") {
+          navigate("/dashboard/empleado", { replace: true });
+        }
+      } catch (error) {
+        console.error("Error al verificar rol:", error);
+      }
+    }
+  }, [navigate]);
 
   return (
     <div className="space-y-6">
