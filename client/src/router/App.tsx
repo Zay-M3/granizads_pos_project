@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import Layout from "@layout/Layout";
 import Home from "@pages/home/Home";
+import HomeEmployee from "@pages/home/HomeEmployee";
 import Login from "@pages/login/Login";
 import CreateProducts from "@pages/products/CreateProducts";
 import ListProducts from "@pages/products/ListProducts";
@@ -8,7 +9,9 @@ import ListInventory from "@pages/inventory/ListInventory";
 import CreateInputs from "@pages/inventory/CreateInputs";
 import CreateCashier from "@pages/admin/CreateCashier";
 import ListCashier from "@pages/admin/ListCashier";
+import Sales from "@pages/Employees/Sales";
 import NotFound from "@pages/notFound/NotFound";
+import { ProtectedRoute } from "@components/ProtectedRoute";
 
 export const router = createBrowserRouter([
   {
@@ -24,28 +27,68 @@ export const router = createBrowserRouter([
         element: <Home />,
       },
       {
+        path: "empleado",
+        element: (
+          <ProtectedRoute allowedRoles={["cajero"]}>
+            <HomeEmployee />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "ventas/crear",
+        element: (
+          <ProtectedRoute allowedRoles={["cajero"]}>
+            <Sales />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "productos",
-        element: <ListProducts />,
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ListProducts />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "productos/crear",
-        element: <CreateProducts />,
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <CreateProducts />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "inventario",
-        element: <ListInventory />,
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ListInventory />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "inventario/agregar",
-        element: <CreateInputs />,
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <CreateInputs />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "cajeros",
-        element: <ListCashier />,
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ListCashier />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "cajeros/crear",
-        element: <CreateCashier />,
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <CreateCashier />
+          </ProtectedRoute>
+        ),
       },
     ],
   },

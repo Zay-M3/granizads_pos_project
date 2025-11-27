@@ -1,14 +1,7 @@
 import api from './axios.config';
+import type { Empleado } from '@utils/EmpleadosUtils';
 
-export interface Empleado {
-  id_empleado?: number;
-  nombre: string;
-  email: string;
-  telefono?: string;
-  cargo?: string;
-  fecha_contratacion?: string;
-  activo?: boolean;
-}
+export type { Empleado };
 
 export const getEmpleados = async () => {
   const response = await api.get('/empleados');

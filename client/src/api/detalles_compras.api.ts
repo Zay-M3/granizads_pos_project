@@ -1,13 +1,7 @@
 import api from './axios.config';
+import type { DetalleCompra } from '@utils/DetallesComprasUtils';
 
-export interface DetalleCompra {
-  id_detalle?: number;
-  id_venta?: number;
-  id_producto: number;
-  cantidad: number;
-  precio_unitario: number;
-  subtotal?: number;
-}
+export type { DetalleCompra };
 
 export const getDetallesCompra = async () => {
   const response = await api.get('/detalles');

@@ -32,7 +32,13 @@ const Login: React.FC = () => {
       }
 
       alert(`Bienvenido ${response.user.nombre} ✅`);
-      navigate("/dashboard/productos/crear");
+      
+      // Redirigir según el rol del usuario
+      if (response.user.rol === "cajero") {
+        navigate("/dashboard/empleado");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       console.error("Error en login:", err);
       const errorMessage = (err as { response?: { data?: { error?: string } } }).response?.data?.error || "Error al iniciar sesión. Verifica tus credenciales.";
