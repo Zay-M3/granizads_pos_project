@@ -3,6 +3,10 @@ export interface DetalleVenta {
   id_producto: number;
   cantidad: number;
   precio_unitario: number;
+  subtotal?: number;
+  producto_nombre?: string;
+  producto_descripcion?: string;
+  categoria_nombre?: string;
 }
 
 export interface Venta {
@@ -12,8 +16,16 @@ export interface Venta {
   total?: number;
   metodo_pago: 'efectivo' | 'tarjeta' | 'transferencia';
   estado?: 'completada' | 'anulada';
+  fecha?: string;
   fecha_venta?: string;
-  detalles?: DetalleVenta[];
+  empleado_nombre?: string;
+  cliente_nombre?: string;
+  total_items?: number;
+}
+
+export interface VentaCompleta {
+  venta: Venta;
+  detalles: DetalleVenta[];
 }
 
 export interface EstadisticasVentas {
