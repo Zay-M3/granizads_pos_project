@@ -1,16 +1,33 @@
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createInsumo } from "@api/insumos.api";
 import type { Insumo } from "@utils/InventoryUtils";
+import ModalError from "@components/ModalError";
+import ModalAlert from "@components/ModalAlert";
+import ConfirmAction from "@components/ConfirmAction";
 
 const CreateInputs = () => {
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors }, watch, reset } = useForm<Insumo>({
+  const [errorModal, setErrorModal] = useState({ isOpen: false, message: "" });
+  const [successModal, setSuccessModal] = useState({
+    isOpen: false,
+    message: "",
+  });
+  const [confirmModal, setConfirmModal] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    reset,
+  } = useForm<Insumo>({
     defaultValues: {
       nombre: "",
       unidad_medida: "litros",
       stock: 0,
-      fecha_compra: new Date().toISOString().split('T')[0],
+      fecha_compra: new Date().toISOString().split("T")[0],
       costo_unitario: 0,
       alerta: false,
       minimo_stock: 0,
@@ -22,9 +39,11 @@ const CreateInputs = () => {
 
   // Calcular estado del insumo
   const getStockStatus = () => {
-    if (stock <= minimo_stock * 0.5) return { color: 'text-red-600', label: 'Crítico' };
-    if (stock <= minimo_stock) return { color: 'text-orange-600', label: 'Stock Bajo' };
-    return { color: 'text-green-600', label: 'Stock Normal' };
+    if (stock <= minimo_stock * 0.5)
+      return { color: "text-red-600", label: "Crítico" };
+    if (stock <= minimo_stock)
+      return { color: "text-orange-600", label: "Stock Bajo" };
+    return { color: "text-green-600", label: "Stock Normal" };
   };
 
   const onSubmit = async (data: Insumo) => {
@@ -36,21 +55,28 @@ const CreateInputs = () => {
       };
 
       await createInsumo(insumoData);
-      
-      alert('Insumo registrado exitosamente ✅');
+
+      setSuccessModal({
+        isOpen: true,
+        message: "Insumo registrado exitosamente",
+      });
       reset();
-      navigate('/dashboard/inventario');
+      setTimeout(() => navigate("/dashboard/inventario"), 2000);
     } catch (error) {
-      console.error('Error al crear insumo:', error);
-      const errorMessage = (error as { response?: { data?: { error?: string } } }).response?.data?.error || 'Error al registrar el insumo';
-      alert(errorMessage + ' ❌');
+      console.error("Error al crear insumo:", error);
+      const errorMessage =
+        (error as { response?: { data?: { error?: string } } }).response?.data
+          ?.error || "Error al registrar el insumo";
+      setErrorModal({ isOpen: true, message: errorMessage });
     }
   };
 
   const handleCancel = () => {
-    if (window.confirm('¿Estás seguro de cancelar? Se perderán los datos ingresados.')) {
-      navigate('/dashboard/inventario');
-    }
+    setConfirmModal(true);
+  };
+
+  const handleConfirmCancel = () => {
+    navigate("/dashboard/inventario");
   };
 
   const status = getStockStatus();
@@ -60,28 +86,55 @@ const CreateInputs = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-display font-bold text-primary-dark">Registrar Compra de Insumo</h1>
-          <p className="text-gray-500 mt-1">Agrega nuevos insumos al inventario</p>
+          <h1 className="text-3xl font-display font-bold text-primary-dark">
+            Registrar Compra de Insumo
+          </h1>
+          <p className="text-gray-500 mt-1">
+            Agrega nuevos insumos al inventario
+          </p>
         </div>
         <button
-          onClick={() => navigate('/dashboard/inventario')}
+          onClick={() => navigate("/dashboard/inventario")}
           className="text-gray-600 hover:text-primary-dark transition-colors flex items-center space-x-2 cursor-pointer"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
           </svg>
           <span>Volver</span>
         </button>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+      >
         {/* Formulario Principal */}
         <div className="lg:col-span-2 space-y-6">
           {/* Información Básica */}
           <div className="bg-white rounded-xl p-6 shadow-sm">
             <h2 className="text-xl font-bold text-primary-dark mb-4 flex items-center space-x-2">
-              <svg className="w-6 h-6 text-button" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-6 h-6 text-button"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <span>Información del Insumo</span>
             </h2>
@@ -104,7 +157,9 @@ const CreateInputs = () => {
                   placeholder="Ej: Ron Blanco, Coca Cola, Limones"
                 />
                 {errors.nombre && (
-                  <p className="text-red-500 text-sm mt-1">{errors.nombre.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.nombre.message}
+                  </p>
                 )}
               </div>
 
@@ -114,7 +169,9 @@ const CreateInputs = () => {
                   Unidad de Medida <span className="text-red-500">*</span>
                 </label>
                 <select
-                  {...register("unidad_medida", { required: "La unidad es obligatoria" })}
+                  {...register("unidad_medida", {
+                    required: "La unidad es obligatoria",
+                  })}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-button cursor-pointer ${
                     errors.unidad_medida ? "border-red-500" : "border-gray-300"
                   }`}
@@ -129,7 +186,9 @@ const CreateInputs = () => {
                   <option value="latas">Latas</option>
                 </select>
                 {errors.unidad_medida && (
-                  <p className="text-red-500 text-sm mt-1">{errors.unidad_medida.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.unidad_medida.message}
+                  </p>
                 )}
               </div>
 
@@ -140,13 +199,17 @@ const CreateInputs = () => {
                 </label>
                 <input
                   type="date"
-                  {...register("fecha_compra", { required: "La fecha es obligatoria" })}
+                  {...register("fecha_compra", {
+                    required: "La fecha es obligatoria",
+                  })}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-button ${
                     errors.fecha_compra ? "border-red-500" : "border-gray-300"
                   }`}
                 />
                 {errors.fecha_compra && (
-                  <p className="text-red-500 text-sm mt-1">{errors.fecha_compra.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.fecha_compra.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -155,8 +218,18 @@ const CreateInputs = () => {
           {/* Cantidad y Costos */}
           <div className="bg-white rounded-xl p-6 shadow-sm">
             <h2 className="text-xl font-bold text-primary-dark mb-4 flex items-center space-x-2">
-              <svg className="w-6 h-6 text-button" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-6 h-6 text-button"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <span>Cantidad y Precio</span>
             </h2>
@@ -180,7 +253,9 @@ const CreateInputs = () => {
                   placeholder="0.00"
                 />
                 {errors.stock && (
-                  <p className="text-red-500 text-sm mt-1">{errors.stock.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.stock.message}
+                  </p>
                 )}
               </div>
 
@@ -202,7 +277,9 @@ const CreateInputs = () => {
                   placeholder="0.00"
                 />
                 {errors.minimo_stock && (
-                  <p className="text-red-500 text-sm mt-1">{errors.minimo_stock.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.minimo_stock.message}
+                  </p>
                 )}
               </div>
 
@@ -224,7 +301,9 @@ const CreateInputs = () => {
                   placeholder="0.00"
                 />
                 {errors.costo_unitario && (
-                  <p className="text-red-500 text-sm mt-1">{errors.costo_unitario.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.costo_unitario.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -234,9 +313,11 @@ const CreateInputs = () => {
         {/* Panel Lateral - Resumen */}
         <div className="lg:col-span-1 space-y-6">
           {/* Vista Previa */}
-          <div className="bg-white rounded-xl p-6 shadow-sm sticky top-6">
-            <h2 className="text-xl font-bold text-primary-dark mb-4">Vista Previa</h2>
-            
+          <div className="bg-white rounded-xl p-6 shadow-sm">
+            <h2 className="text-xl font-bold text-primary-dark mb-4">
+              Vista Previa
+            </h2>
+
             {/* Icono del insumo */}
             <div className="w-full h-32 bg-linear-to-br from-primary/10 to-card/10 rounded-lg flex items-center justify-center mb-4">
               <span className="text-6xl">📦</span>
@@ -246,7 +327,9 @@ const CreateInputs = () => {
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-gray-500">Nombre</p>
-                <p className="font-bold text-gray-800">{watch("nombre") || "Sin nombre"}</p>
+                <p className="font-bold text-gray-800">
+                  {watch("nombre") || "Sin nombre"}
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -274,7 +357,10 @@ const CreateInputs = () => {
                 <div>
                   <p className="text-sm text-gray-500">Costo Total</p>
                   <p className="font-bold text-gray-800 text-lg">
-                    ${((watch("stock") || 0) * (watch("costo_unitario") || 0)).toLocaleString()}
+                    $
+                    {(
+                      (watch("stock") || 0) * (watch("costo_unitario") || 0)
+                    ).toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -286,7 +372,9 @@ const CreateInputs = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Fecha de Compra</p>
-                  <p className="font-medium text-gray-800">{watch("fecha_compra") || "No especificada"}</p>
+                  <p className="font-medium text-gray-800">
+                    {watch("fecha_compra") || "No especificada"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -298,8 +386,18 @@ const CreateInputs = () => {
               type="submit"
               className="w-full bg-linear-to-r from-button to-button-hover text-white py-3 rounded-lg font-bold hover:shadow-lg transition-all flex items-center justify-center space-x-2 cursor-pointer"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
               <span>Registrar Insumo</span>
             </button>
@@ -314,6 +412,31 @@ const CreateInputs = () => {
           </div>
         </div>
       </form>
+
+      {/* Modales */}
+      <ModalError
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ isOpen: false, message: "" })}
+        message={errorModal.message}
+      />
+
+      <ModalAlert
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal({ isOpen: false, message: "" })}
+        message={successModal.message}
+        type="success"
+      />
+
+      <ConfirmAction
+        isOpen={confirmModal}
+        onClose={() => setConfirmModal(false)}
+        onConfirm={handleConfirmCancel}
+        title="¿Cancelar registro?"
+        message="Se perderán los datos ingresados. ¿Estás seguro de continuar?"
+        confirmText="Sí, cancelar"
+        cancelText="No, continuar"
+        type="warning"
+      />
     </div>
   );
 };

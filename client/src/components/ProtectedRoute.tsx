@@ -1,14 +1,17 @@
 import { Navigate } from "react-router-dom";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
   allowedRoles: ("admin" | "cajero")[];
 }
 
-export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({
+  children,
+  allowedRoles,
+}: ProtectedRouteProps) => {
   const userStr = localStorage.getItem("user");
-  
+
   if (!userStr) {
     // Si no hay usuario, redirigir al login
     return <Navigate to="/" replace />;
@@ -16,7 +19,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
 
   try {
     const user = JSON.parse(userStr);
-    
+
     if (!allowedRoles.includes(user.rol)) {
       // Si el rol no está permitido, redirigir al dashboard
       return <Navigate to="/dashboard" replace />;

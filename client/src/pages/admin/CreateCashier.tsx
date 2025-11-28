@@ -1,10 +1,19 @@
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createUsuario } from "@api/usuarios.api";
 import type { UsuarioFormData } from "@utils/admin/CreateCashierUtils";
+import ModalError from "@components/ModalError";
+import ModalAlert from "@components/ModalAlert";
 
 const CreateCashier = () => {
   const navigate = useNavigate();
+  const [errorModal, setErrorModal] = useState({ isOpen: false, message: "" });
+  const [successModal, setSuccessModal] = useState({
+    isOpen: false,
+    message: "",
+  });
+
   const {
     register,
     handleSubmit,
@@ -27,7 +36,7 @@ const CreateCashier = () => {
     try {
       // Generar id_usuario único (timestamp simplificado)
       const id_usuario = Number(Date.now().toString().slice(-9));
-      
+
       const usuarioData = {
         ...data,
         id_usuario,
@@ -35,13 +44,18 @@ const CreateCashier = () => {
 
       await createUsuario(usuarioData);
 
-      alert("Cajero registrado exitosamente ✅");
+      setSuccessModal({
+        isOpen: true,
+        message: "Cajero registrado exitosamente",
+      });
       reset();
-      navigate(-1);
+      setTimeout(() => navigate(-1), 2000);
     } catch (error) {
       console.error("Error al crear cajero:", error);
-      const errorMessage = (error as { response?: { data?: { error?: string } } }).response?.data?.error || "Error al registrar el cajero";
-      alert(errorMessage + " ❌");
+      const errorMessage =
+        (error as { response?: { data?: { error?: string } } }).response?.data
+          ?.error || "Error al registrar el cajero";
+      setErrorModal({ isOpen: true, message: errorMessage });
     }
   };
 
@@ -167,7 +181,8 @@ const CreateCashier = () => {
                   {...register("fecha_nacimiento", {
                     required: "La fecha de nacimiento es obligatoria",
                     validate: (value) => {
-                      if (!value) return "La fecha de nacimiento es obligatoria";
+                      if (!value)
+                        return "La fecha de nacimiento es obligatoria";
                       const birthDate = new Date(value);
                       const today = new Date();
                       const age = today.getFullYear() - birthDate.getFullYear();
@@ -377,6 +392,20 @@ const CreateCashier = () => {
           </div>
         </div>
       </form>
+
+      {/* Modales */}
+      <ModalError
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ isOpen: false, message: "" })}
+        message={errorModal.message}
+      />
+
+      <ModalAlert
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal({ isOpen: false, message: "" })}
+        message={successModal.message}
+        type="success"
+      />
     </div>
   );
 };

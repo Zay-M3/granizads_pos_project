@@ -6,6 +6,8 @@ import { createCliente } from "@api/clientes.api";
 import { createVenta } from "@api/ventas.api";
 import type { Producto } from "@utils/CreateProductsUtil";
 import type { DetalleVenta } from "@utils/VentasUtils";
+import ModalError from "@components/ModalError";
+import ModalAlert from "@components/ModalAlert";
 
 interface ClienteFormData {
   cedula: string;
@@ -38,7 +40,20 @@ const Sales = () => {
   const [productoSeleccionado, setProductoSeleccionado] = useState<number>(0);
   const [cantidadProducto, setCantidadProducto] = useState<number>(1);
   const [showClienteForm, setShowClienteForm] = useState(false);
-  const [clienteRegistrado, setClienteRegistrado] = useState<ClienteResponse | null>(null);
+  const [clienteRegistrado, setClienteRegistrado] =
+    useState<ClienteResponse | null>(null);
+
+  // Estados para modales
+  const [errorModal, setErrorModal] = useState({ isOpen: false, message: "" });
+  const [alertModal, setAlertModal] = useState({
+    isOpen: false,
+    message: "",
+    type: "info" as "info" | "success" | "warning",
+  });
+  const [warningModal, setWarningModal] = useState({
+    isOpen: false,
+    message: "",
+  });
 
   const {
     register: registerCliente,
@@ -61,7 +76,10 @@ const Sales = () => {
         setProductos(data);
       } catch (error) {
         console.error("Error al cargar productos:", error);
-        alert("Error al cargar los productos");
+        setErrorModal({
+          isOpen: true,
+          message: "Error al cargar los productos",
+        });
       }
     };
     fetchProductos();
@@ -75,11 +93,16 @@ const Sales = () => {
   // Agregar producto al carrito
   const agregarAlCarrito = () => {
     if (productoSeleccionado === 0 || cantidadProducto <= 0) {
-      alert("Selecciona un producto y cantidad válida");
+      setWarningModal({
+        isOpen: true,
+        message: "Selecciona un producto y cantidad válida",
+      });
       return;
     }
 
-    const producto = productos.find((p) => p.id_producto === productoSeleccionado);
+    const producto = productos.find(
+      (p) => p.id_producto === productoSeleccionado
+    );
     if (!producto) return;
 
     const productoEnCarrito = carrito.find(
@@ -147,7 +170,10 @@ const Sales = () => {
   // Procesar venta
   const onSubmitVenta = async (data: VentaFormData) => {
     if (carrito.length === 0) {
-      alert("Agrega productos al carrito antes de continuar");
+      setWarningModal({
+        isOpen: true,
+        message: "Agrega productos al carrito antes de continuar",
+      });
       return;
     }
 
@@ -155,8 +181,8 @@ const Sales = () => {
       // Obtener id_empleado del usuario logueado (desde localStorage o context)
       const userStr = localStorage.getItem("user");
       if (!userStr) {
-        alert("No hay sesión activa");
-        navigate("/");
+        setErrorModal({ isOpen: true, message: "No hay sesión activa" });
+        setTimeout(() => navigate("/"), 2000);
         return;
       }
 
@@ -164,7 +190,10 @@ const Sales = () => {
       const id_empleado = user.empleado?.id_empleado;
 
       if (!id_empleado) {
-        alert("El usuario no tiene un empleado asociado");
+        setErrorModal({
+          isOpen: true,
+          message: "El usuario no tiene un empleado asociado",
+        });
         return;
       }
 
@@ -177,31 +206,43 @@ const Sales = () => {
 
       // Preparar datos para la venta según el backend analizado
       const ventaData = {
-        id_cliente: clienteRegistrado?.id_cliente || null, // El backend acepta null
+        id_cliente: clienteRegistrado?.id_cliente,
         id_empleado: id_empleado,
         metodo_pago: data.metodo_pago,
-        detalles: detalles
+        detalles: detalles,
       };
 
       console.log("Enviando datos de venta:", ventaData);
 
       // Crear venta (sin factura electrónica)
-      const ventaResponse = await createVenta(ventaData);
-      
-      alert("¡Venta registrada exitosamente!");
-      
+      await createVenta(ventaData);
+
+      setAlertModal({
+        isOpen: true,
+        message: "¡Venta registrada exitosamente!",
+        type: "success",
+      });
+
       // Limpiar formulario
       setCarrito([]);
       resetCliente();
       setShowClienteForm(false);
       setClienteRegistrado(null);
-      
-      // Redirigir o mostrar resumen
-      navigate("/dashboard");
-    } catch (error: any) {
+
+      // Redirigir o mostrar resumen después de cerrar modal
+      setTimeout(() => navigate("/dashboard/empleado"), 2000);
+    } catch (error) {
       console.error("Error al procesar venta:", error);
-      const errorMessage = error.response?.data?.error || error.message || "Error al procesar la venta";
-      alert(errorMessage);
+      const errorMessage =
+        (
+          error as {
+            response?: { data?: { error?: string } };
+            message?: string;
+          }
+        ).response?.data?.error ||
+        (error as { message?: string }).message ||
+        "Error al procesar la venta";
+      setErrorModal({ isOpen: true, message: errorMessage });
     }
   };
 
@@ -213,13 +254,25 @@ const Sales = () => {
         nombre: data.nombre,
       });
       setClienteRegistrado(clienteResponse);
-      alert(`Cliente registrado: ${clienteResponse.nombre}`);
+      setAlertModal({
+        isOpen: true,
+        message: `Cliente registrado: ${clienteResponse.nombre}`,
+        type: "success",
+      });
       setShowClienteForm(false);
       resetCliente();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error al registrar cliente:", error);
-      const errorMessage = error.response?.data?.error || error.message || "Error al registrar cliente";
-      alert(errorMessage);
+      const errorMessage =
+        (
+          error as {
+            response?: { data?: { error?: string } };
+            message?: string;
+          }
+        ).response?.data?.error ||
+        (error as { message?: string }).message ||
+        "Error al registrar cliente";
+      setErrorModal({ isOpen: true, message: errorMessage });
     }
   };
 
@@ -265,7 +318,9 @@ const Sales = () => {
               </label>
               <select
                 value={productoSeleccionado}
-                onChange={(e) => setProductoSeleccionado(Number(e.target.value))}
+                onChange={(e) =>
+                  setProductoSeleccionado(Number(e.target.value))
+                }
                 className="w-full px-4 py-3 border-2 border-secondary rounded-lg focus:border-button focus:outline-none cursor-pointer"
               >
                 <option value={0}>Seleccionar producto...</option>
@@ -284,13 +339,27 @@ const Sales = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Cantidad
               </label>
-              <input
-                type="number"
-                min="1"
-                value={cantidadProducto}
-                onChange={(e) => setCantidadProducto(Number(e.target.value))}
-                className="w-full px-4 py-3 border-2 border-secondary rounded-lg focus:border-button focus:outline-none"
-              />
+              <div className="flex items-center justify-center space-x-3 border-2 border-secondary rounded-lg px-4 py-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCantidadProducto(Math.max(1, cantidadProducto - 1))
+                  }
+                  className="w-8 h-8 bg-gray-200 rounded-lg hover:bg-gray-300 flex items-center justify-center cursor-pointer font-bold"
+                >
+                  −
+                </button>
+                <span className="w-12 text-center font-bold text-lg">
+                  {cantidadProducto}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCantidadProducto(cantidadProducto + 1)}
+                  className="w-8 h-8 bg-gray-200 rounded-lg hover:bg-gray-300 flex items-center justify-center cursor-pointer font-bold"
+                >
+                  +
+                </button>
+              </div>
             </div>
           </div>
 
@@ -419,20 +488,34 @@ const Sales = () => {
           {/* Cliente opcional */}
           <div className="bg-white rounded-xl p-6 shadow-sm">
             <h3 className="font-bold text-gray-800 mb-3">Cliente (Opcional)</h3>
-            
+
             {clienteRegistrado ? (
               <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="font-medium text-green-800">{clienteRegistrado.nombre}</p>
-                    <p className="text-sm text-green-600">Cédula: {clienteRegistrado.cedula}</p>
+                    <p className="font-medium text-green-800">
+                      {clienteRegistrado.nombre}
+                    </p>
+                    <p className="text-sm text-green-600">
+                      Cédula: {clienteRegistrado.cedula}
+                    </p>
                   </div>
                   <button
                     onClick={removerCliente}
                     className="text-red-500 hover:text-red-700"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -445,7 +528,10 @@ const Sales = () => {
                 + Registrar Cliente
               </button>
             ) : (
-              <form onSubmit={handleSubmitCliente(onSubmitCliente)} className="space-y-3">
+              <form
+                onSubmit={handleSubmitCliente(onSubmitCliente)}
+                className="space-y-3"
+              >
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Cédula *
@@ -521,7 +607,9 @@ const Sales = () => {
               </div>
               <div className="border-t-2 border-secondary pt-3">
                 <div className="flex justify-between">
-                  <span className="font-bold text-lg text-gray-800">TOTAL:</span>
+                  <span className="font-bold text-lg text-gray-800">
+                    TOTAL:
+                  </span>
                   <span className="font-bold text-2xl text-primary">
                     ${calcularTotal().toLocaleString()}
                   </span>
@@ -530,7 +618,10 @@ const Sales = () => {
             </div>
 
             {/* Método de pago */}
-            <form onSubmit={handleSubmitVenta(onSubmitVenta)} className="space-y-4">
+            <form
+              onSubmit={handleSubmitVenta(onSubmitVenta)}
+              className="space-y-4"
+            >
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Método de Pago *
@@ -556,7 +647,7 @@ const Sales = () => {
               <button
                 type="submit"
                 disabled={isSubmitting || carrito.length === 0}
-                className="w-full bg-gradient-to-r from-button to-button-hover text-white py-4 rounded-lg font-bold text-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
+                className="w-full bg-linear-to-r from-button to-button-hover text-white py-4 rounded-lg font-bold text-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
               >
                 {isSubmitting ? (
                   <>
@@ -628,6 +719,29 @@ const Sales = () => {
           )}
         </div>
       </div>
+
+      {/* Modales */}
+      <ModalError
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ isOpen: false, message: "" })}
+        message={errorModal.message}
+      />
+
+      <ModalAlert
+        isOpen={alertModal.isOpen}
+        onClose={() =>
+          setAlertModal({ isOpen: false, message: "", type: "info" })
+        }
+        message={alertModal.message}
+        type={alertModal.type}
+      />
+
+      <ModalAlert
+        isOpen={warningModal.isOpen}
+        onClose={() => setWarningModal({ isOpen: false, message: "" })}
+        message={warningModal.message}
+        type="warning"
+      />
     </div>
   );
 };

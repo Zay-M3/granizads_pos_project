@@ -10,19 +10,32 @@ import type { InsumoReceta, ProductoFormData } from "@utils/CreateProductsUtil";
 import type { Insumo } from "@utils/InventoryUtils";
 
 // Componente de Toast simple
-const Toast = ({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) => {
+const Toast = ({
+  message,
+  type,
+  onClose,
+}: {
+  message: string;
+  type: "success" | "error";
+  onClose: () => void;
+}) => {
   useEffect(() => {
     const timer = setTimeout(onClose, 4000);
     return () => clearTimeout(timer);
   }, [onClose]);
 
   return (
-    <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-      type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-    }`}>
+    <div
+      className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+        type === "success" ? "bg-green-500 text-white" : "bg-red-500 text-white"
+      }`}
+    >
       <div className="flex items-center justify-between">
         <span>{message}</span>
-        <button onClick={onClose} className="ml-4 text-white hover:text-gray-200">
+        <button
+          onClick={onClose}
+          className="ml-4 text-white hover:text-gray-200"
+        >
           ×
         </button>
       </div>
@@ -36,10 +49,16 @@ const CreateProducts = () => {
   const [categories, setCategories] = useState<Categoria[]>([]);
   const [insumosDisponibles, setInsumosDisponibles] = useState<Insumo[]>([]);
   const [insumos, setInsumos] = useState<InsumoReceta[]>([]);
-  const [newInsumo, setNewInsumo] = useState({ id_insumo: 0, cantidad_usada: 0 });
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [newInsumo, setNewInsumo] = useState({
+    id_insumo: 0,
+    cantidad_usada: 0,
+  });
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
-  const showToast = (message: string, type: 'success' | 'error') => {
+  const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
   };
 
@@ -50,8 +69,8 @@ const CreateProducts = () => {
         const data = await getCategorias();
         setCategories(data);
       } catch (error) {
-        console.error('Error al cargar categorías:', error);
-        showToast('Error al cargar las categorías', 'error');
+        console.error("Error al cargar categorías:", error);
+        showToast("Error al cargar las categorías", "error");
       }
     };
     fetchCategories();
@@ -64,7 +83,7 @@ const CreateProducts = () => {
         const data = await getInsumos();
         setInsumosDisponibles(data);
       } catch (error) {
-        console.error('Error al cargar insumos:', error);
+        console.error("Error al cargar insumos:", error);
       }
     };
     fetchInsumos();
@@ -91,37 +110,40 @@ const CreateProducts = () => {
         ...data,
         receta: insumos,
       };
-      
+
       await createProducto(productData);
-      
-      showToast("Producto creado exitosamente ✅", 'success');
+
+      showToast("Producto creado exitosamente ✅", "success");
       reset();
       setInsumos([]);
-      
+
       // Navegar después de un breve delay para que se vea el toast
       setTimeout(() => {
-        navigate('/dashboard/productos');
+        navigate("/dashboard/productos");
       }, 1500);
-      
     } catch (error) {
       console.error("Error al crear producto:", error);
-      const errorMessage = (error as { response?: { data?: { error?: string } } }).response?.data?.error || "Error al crear el producto";
-      showToast(errorMessage + " ❌", 'error');
+      const errorMessage =
+        (error as { response?: { data?: { error?: string } } }).response?.data
+          ?.error || "Error al crear el producto";
+      showToast(errorMessage + " ❌", "error");
     }
   };
 
   const addInsumo = () => {
     if (newInsumo.id_insumo > 0 && newInsumo.cantidad_usada > 0) {
       // Verificar si el insumo existe
-      const insumoExiste = insumosDisponibles.find(i => i.id_insumo === newInsumo.id_insumo);
+      const insumoExiste = insumosDisponibles.find(
+        (i) => i.id_insumo === newInsumo.id_insumo
+      );
       if (!insumoExiste) {
-        showToast("El insumo seleccionado no existe", 'error');
+        showToast("El insumo seleccionado no existe", "error");
         return;
       }
       setInsumos([...insumos, newInsumo]);
       setNewInsumo({ id_insumo: 0, cantidad_usada: 0 });
     } else {
-      showToast("Por favor completa todos los campos del insumo", 'error');
+      showToast("Por favor completa todos los campos del insumo", "error");
     }
   };
 
@@ -133,10 +155,10 @@ const CreateProducts = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Toast Notification */}
       {toast && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={() => setToast(null)} 
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
         />
       )}
 
@@ -177,7 +199,9 @@ const CreateProducts = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {errors.nombre && (
-                  <p className="text-red-500 text-sm mt-1">{errors.nombre.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.nombre.message}
+                  </p>
                 )}
               </div>
 
@@ -190,7 +214,8 @@ const CreateProducts = () => {
                   <select
                     {...register("id_categoria", {
                       required: "Selecciona una categoría",
-                      validate: (value) => value > 0 || "Selecciona una categoría válida",
+                      validate: (value) =>
+                        value > 0 || "Selecciona una categoría válida",
                     })}
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
@@ -210,7 +235,9 @@ const CreateProducts = () => {
                   </button>
                 </div>
                 {errors.id_categoria && (
-                  <p className="text-red-500 text-sm mt-1">{errors.id_categoria.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.id_categoria.message}
+                  </p>
                 )}
               </div>
 
@@ -220,11 +247,16 @@ const CreateProducts = () => {
                   Precio *
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                  <span className="absolute left-3 top-2.5 text-gray-500">
+                    $
+                  </span>
                   <input
                     {...register("precio", {
                       required: "El precio es obligatorio",
-                      min: { value: 0, message: "El precio debe ser mayor a 0" },
+                      min: {
+                        value: 0,
+                        message: "El precio debe ser mayor a 0",
+                      },
                     })}
                     type="number"
                     step="0.01"
@@ -233,7 +265,9 @@ const CreateProducts = () => {
                   />
                 </div>
                 {errors.precio && (
-                  <p className="text-red-500 text-sm mt-1">{errors.precio.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.precio.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -267,7 +301,10 @@ const CreateProducts = () => {
                 <select
                   value={newInsumo.id_insumo}
                   onChange={(e) =>
-                    setNewInsumo({ ...newInsumo, id_insumo: Number(e.target.value) })
+                    setNewInsumo({
+                      ...newInsumo,
+                      id_insumo: Number(e.target.value),
+                    })
                   }
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
@@ -288,7 +325,10 @@ const CreateProducts = () => {
                   step="0.01"
                   value={newInsumo.cantidad_usada}
                   onChange={(e) =>
-                    setNewInsumo({ ...newInsumo, cantidad_usada: Number(e.target.value) })
+                    setNewInsumo({
+                      ...newInsumo,
+                      cantidad_usada: Number(e.target.value),
+                    })
                   }
                   placeholder="Ej: 0.06"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -313,7 +353,9 @@ const CreateProducts = () => {
                 </h3>
                 <div className="space-y-2">
                   {insumos.map((insumo, index) => {
-                    const insumoData = insumosDisponibles.find(i => i.id_insumo === insumo.id_insumo);
+                    const insumoData = insumosDisponibles.find(
+                      (i) => i.id_insumo === insumo.id_insumo
+                    );
                     return (
                       <div
                         key={index}
@@ -321,10 +363,13 @@ const CreateProducts = () => {
                       >
                         <div>
                           <span className="font-medium">
-                            {insumoData ? insumoData.nombre : `ID: ${insumo.id_insumo}`}
+                            {insumoData
+                              ? insumoData.nombre
+                              : `ID: ${insumo.id_insumo}`}
                           </span>
                           <span className="text-gray-600 ml-4">
-                            Cantidad: {insumo.cantidad_usada} {insumoData?.unidad_medida || ''}
+                            Cantidad: {insumo.cantidad_usada}{" "}
+                            {insumoData?.unidad_medida || ""}
                           </span>
                         </div>
                         <button
@@ -347,7 +392,7 @@ const CreateProducts = () => {
             <div className="flex justify-end gap-4">
               <button
                 type="button"
-                onClick={() => navigate('/dashboard/productos')}
+                onClick={() => navigate("/dashboard/productos")}
                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 Cancelar
@@ -370,7 +415,7 @@ const CreateProducts = () => {
           onSave={(newCategory) => {
             setCategories([...categories, newCategory]);
             setIsModalCategoriesOpen(false);
-            showToast("Categoría creada exitosamente", 'success');
+            showToast("Categoría creada exitosamente", "success");
           }}
         />
       </div>

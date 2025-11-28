@@ -6,6 +6,7 @@ const Layout = () => {
   const location = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [userRole, setUserRole] = useState<"admin" | "cajero" | null>(null);
+  const [userName, setUserName] = useState<string>("Usuario");
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -16,14 +17,15 @@ const Layout = () => {
   }, []);
 
   useEffect(() => {
-    // Obtener el rol del usuario
+    // Obtener el rol y nombre del usuario
     const userStr = localStorage.getItem("user");
     if (userStr) {
       try {
         const user = JSON.parse(userStr);
         setUserRole(user.rol);
+        setUserName(user.nombre || "Usuario");
       } catch (error) {
-        console.error("Error al obtener rol:", error);
+        console.error("Error al obtener datos del usuario:", error);
       }
     }
   }, []);
@@ -52,16 +54,22 @@ const Layout = () => {
         {/* Menú de navegación */}
         <nav className="flex flex-col space-y-6">
           <button
-            onClick={() => navigate(userRole === "cajero" ? "/dashboard/empleado" : "/dashboard")}
+            onClick={() =>
+              navigate(
+                userRole === "cajero" ? "/dashboard/empleado" : "/dashboard"
+              )
+            }
             className={`w-12 h-12 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
-              (location.pathname === "/dashboard" || location.pathname === "/dashboard/empleado")
+              location.pathname === "/dashboard" ||
+              location.pathname === "/dashboard/empleado"
                 ? "bg-primary"
                 : "hover:bg-primary/20"
             }`}
           >
             <svg
               className={`w-6 h-6 ${
-                (location.pathname === "/dashboard" || location.pathname === "/dashboard/empleado")
+                location.pathname === "/dashboard" ||
+                location.pathname === "/dashboard/empleado"
                   ? "text-white"
                   : "text-secondary"
               }`}
@@ -240,13 +248,18 @@ const Layout = () => {
             <div className="flex items-center space-x-3 pl-4 border-l border-secondary">
               <div className="text-right">
                 <p className="text-sm font-medium text-primary-dark">
-                  Juan Cajero
+                  {userName}
                 </p>
                 <p className="text-xs text-gray-500">
+                  {userRole === "admin" ? "Administrador" : "Cajero"} •{" "}
                   {formatTime(currentTime)}
                 </p>
               </div>
-              <div className="w-10 h-10 bg-linear-to-br from-primary to-card rounded-full"></div>
+              <div className="w-10 h-10 bg-linear-to-br from-primary to-card rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">
+                  {userName.charAt(0).toUpperCase()}
+                </span>
+              </div>
             </div>
           </div>
         </header>

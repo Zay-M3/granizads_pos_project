@@ -1,15 +1,20 @@
 import api from './axios.config';
-import type { DetalleVenta, Venta, EstadisticasVentas } from '@utils/VentasUtils';
+import type { DetalleVenta, Venta, VentaCompleta, EstadisticasVentas } from '@utils/VentasUtils';
 
-export type { DetalleVenta, Venta, EstadisticasVentas };
+export type { DetalleVenta, Venta, VentaCompleta, EstadisticasVentas };
 
 export const createVenta = async (venta: Venta) => {
   const response = await api.post('/ventas', venta);
   return response.data;
 };
 
-export const getVentas = async () => {
-  const response = await api.get('/ventas');
+export const getVentas = async (params?: {
+  fecha_inicio?: string;
+  fecha_fin?: string;
+  id_empleado?: number;
+  metodo_pago?: string;
+}) => {
+  const response = await api.get('/ventas', { params });
   return response.data;
 };
 
