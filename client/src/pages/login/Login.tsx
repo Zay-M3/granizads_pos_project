@@ -39,9 +39,21 @@ const Login: React.FC = () => {
         localStorage.removeItem("userEmail");
       }
 
+<<<<<<< HEAD
       // Navegar al dashboard
       navigate("/dashboard/productos/crear");
     } catch (err: any) {
+=======
+      alert(`Bienvenido ${response.user.nombre} ✅`);
+      
+      // Redirigir según el rol del usuario
+      if (response.user.rol === "cajero") {
+        navigate("/dashboard/empleado");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (err) {
+>>>>>>> ede48ee965f2d8c315c5778e92c5ab0fbdc4878e
       console.error("Error en login:", err);
       
       // Manejo mejorado de errores

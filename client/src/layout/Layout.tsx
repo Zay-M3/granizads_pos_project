@@ -5,6 +5,7 @@ const Layout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [userRole, setUserRole] = useState<"admin" | "cajero" | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -12,6 +13,19 @@ const Layout = () => {
     }, 1000);
 
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    // Obtener el rol del usuario
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setUserRole(user.rol);
+      } catch (error) {
+        console.error("Error al obtener rol:", error);
+      }
+    }
   }, []);
 
   const formatTime = (date: Date) => {
@@ -38,16 +52,16 @@ const Layout = () => {
         {/* Menú de navegación */}
         <nav className="flex flex-col space-y-6">
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate(userRole === "cajero" ? "/dashboard/empleado" : "/dashboard")}
             className={`w-12 h-12 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
-              location.pathname === "/dashboard"
+              (location.pathname === "/dashboard" || location.pathname === "/dashboard/empleado")
                 ? "bg-primary"
                 : "hover:bg-primary/20"
             }`}
           >
             <svg
               className={`w-6 h-6 ${
-                location.pathname === "/dashboard"
+                (location.pathname === "/dashboard" || location.pathname === "/dashboard/empleado")
                   ? "text-white"
                   : "text-secondary"
               }`}
@@ -64,86 +78,119 @@ const Layout = () => {
             </svg>
           </button>
 
-          <button
-            onClick={() => navigate("/dashboard/productos")}
-            className={`w-12 h-12 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
-              location.pathname.includes("/productos")
-                ? "bg-primary"
-                : "hover:bg-primary/20"
-            }`}
-          >
-            <svg
-              className={`w-6 h-6 ${
-                location.pathname.includes("/productos")
-                  ? "text-white"
-                  : "text-secondary"
+          {userRole === "cajero" && (
+            <button
+              onClick={() => navigate("/dashboard/ventas/crear")}
+              className={`w-12 h-12 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
+                location.pathname.includes("/ventas")
+                  ? "bg-primary"
+                  : "hover:bg-primary/20"
               }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-              />
-            </svg>
-          </button>
+              <svg
+                className={`w-6 h-6 ${
+                  location.pathname.includes("/ventas")
+                    ? "text-white"
+                    : "text-secondary"
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+            </button>
+          )}
 
-          <button
-            onClick={() => navigate("/dashboard/inventario")}
-            className={`w-12 h-12 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
-              location.pathname.includes("/inventario")
-                ? "bg-primary"
-                : "hover:bg-primary/20"
-            }`}
-          >
-            <svg
-              className={`w-6 h-6 ${
-                location.pathname.includes("/inventario")
-                  ? "text-white"
-                  : "text-secondary"
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-              />
-            </svg>
-          </button>
+          {userRole === "admin" && (
+            <>
+              <button
+                onClick={() => navigate("/dashboard/productos")}
+                className={`w-12 h-12 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
+                  location.pathname.includes("/productos")
+                    ? "bg-primary"
+                    : "hover:bg-primary/20"
+                }`}
+              >
+                <svg
+                  className={`w-6 h-6 ${
+                    location.pathname.includes("/productos")
+                      ? "text-white"
+                      : "text-secondary"
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                  />
+                </svg>
+              </button>
 
-          <button
-            onClick={() => navigate("/dashboard/cajeros")}
-            className={`w-12 h-12 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
-              location.pathname.includes("/usuarios")
-                ? "bg-primary"
-                : "hover:bg-primary/20"
-            }`}
-          >
-            <svg
-              className={`w-6 h-6 ${
-                location.pathname.includes("/cajeros")
-                  ? "text-white"
-                  : "text-secondary"
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-              />
-            </svg>
-          </button>
+              <button
+                onClick={() => navigate("/dashboard/inventario")}
+                className={`w-12 h-12 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
+                  location.pathname.includes("/inventario")
+                    ? "bg-primary"
+                    : "hover:bg-primary/20"
+                }`}
+              >
+                <svg
+                  className={`w-6 h-6 ${
+                    location.pathname.includes("/inventario")
+                      ? "text-white"
+                      : "text-secondary"
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  />
+                </svg>
+              </button>
+
+              <button
+                onClick={() => navigate("/dashboard/cajeros")}
+                className={`w-12 h-12 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
+                  location.pathname.includes("/cajeros")
+                    ? "bg-primary"
+                    : "hover:bg-primary/20"
+                }`}
+              >
+                <svg
+                  className={`w-6 h-6 ${
+                    location.pathname.includes("/cajeros")
+                      ? "text-white"
+                      : "text-secondary"
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                  />
+                </svg>
+              </button>
+            </>
+          )}
         </nav>
 
         {/* Logout */}

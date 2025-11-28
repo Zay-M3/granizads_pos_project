@@ -1,22 +1,7 @@
 import api from './axios.config';
+import type { Factura, EstadisticasFacturas } from '@utils/FacturasUtils';
 
-export interface Factura {
-  id_factura?: number;
-  id_venta: number;
-  numero_factura: string;
-  subtotal: number;
-  impuesto: number;
-  total: number;
-  fecha_emision?: string;
-  enviada?: boolean;
-}
-
-export interface EstadisticasFacturas {
-  total_facturas: number;
-  facturas_mes: number;
-  facturas_enviadas: number;
-  total_facturado: number;
-}
+export type { Factura, EstadisticasFacturas };
 
 export const getFacturas = async () => {
   const response = await api.get('/facturas');

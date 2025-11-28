@@ -103,9 +103,9 @@ const ModalEditProduct = ({ isOpen, onClose, product, onSave }: ModalEditProduct
         onSave(formData);
         alert('Producto actualizado exitosamente ✅');
         onClose();
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error al actualizar producto:', error);
-        const errorMessage = error.response?.data?.error || 'Error al actualizar el producto';
+        const errorMessage = (error as { response?: { data?: { error?: string } } }).response?.data?.error || 'Error al actualizar el producto';
         alert(errorMessage + ' ❌');
       }
     }

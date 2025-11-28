@@ -1,13 +1,7 @@
 import api from './axios.config';
+import type { Cliente } from '@utils/ClientesUtils';
 
-export interface Cliente {
-  id_cliente?: number;
-  nombre: string;
-  email?: string;
-  telefono?: string;
-  direccion?: string;
-  fecha_registro?: string;
-}
+export type { Cliente };
 
 export const getClientes = async () => {
   const response = await api.get('/clientes');
