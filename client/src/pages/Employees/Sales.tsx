@@ -243,7 +243,7 @@ const Sales = () => {
           </div>
           <button
             onClick={() => navigate("/dashboard")}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors cursor-pointer"
           >
             ← Volver
           </button>
@@ -266,7 +266,7 @@ const Sales = () => {
               <select
                 value={productoSeleccionado}
                 onChange={(e) => setProductoSeleccionado(Number(e.target.value))}
-                className="w-full px-4 py-3 border-2 border-secondary rounded-lg focus:border-button focus:outline-none"
+                className="w-full px-4 py-3 border-2 border-secondary rounded-lg focus:border-button focus:outline-none cursor-pointer"
               >
                 <option value={0}>Seleccionar producto...</option>
                 {productos.map((producto) => (
@@ -297,7 +297,7 @@ const Sales = () => {
           <button
             type="button"
             onClick={agregarAlCarrito}
-            className="w-full bg-button hover:bg-button-hover text-white py-3 rounded-lg font-bold transition-colors flex items-center justify-center space-x-2"
+            className="w-full bg-button hover:bg-button-hover text-white py-3 rounded-lg font-bold transition-colors flex items-center justify-center space-x-2 cursor-pointer"
           >
             <svg
               className="w-5 h-5"
@@ -362,7 +362,7 @@ const Sales = () => {
                               item.cantidad - 1
                             )
                           }
-                          className="w-8 h-8 bg-gray-200 rounded-lg hover:bg-gray-300 flex items-center justify-center"
+                          className="w-8 h-8 bg-gray-200 rounded-lg hover:bg-gray-300 flex items-center justify-center cursor-pointer"
                         >
                           −
                         </button>
@@ -376,7 +376,7 @@ const Sales = () => {
                               item.cantidad + 1
                             )
                           }
-                          className="w-8 h-8 bg-gray-200 rounded-lg hover:bg-gray-300 flex items-center justify-center"
+                          className="w-8 h-8 bg-gray-200 rounded-lg hover:bg-gray-300 flex items-center justify-center cursor-pointer"
                         >
                           +
                         </button>
@@ -390,7 +390,7 @@ const Sales = () => {
 
                       <button
                         onClick={() => eliminarDelCarrito(item.id_producto)}
-                        className="text-red-500 hover:text-red-700 ml-2"
+                        className="text-red-500 hover:text-red-700 ml-2 cursor-pointer"
                       >
                         <svg
                           className="w-5 h-5"
@@ -440,7 +440,7 @@ const Sales = () => {
             ) : !showClienteForm ? (
               <button
                 onClick={() => setShowClienteForm(true)}
-                className="w-full py-2 border-2 border-button text-button hover:bg-button hover:text-white rounded-lg font-medium transition-colors"
+                className="w-full py-2 border-2 border-button text-button hover:bg-button hover:text-white rounded-lg font-medium transition-colors cursor-pointer"
               >
                 + Registrar Cliente
               </button>
@@ -485,7 +485,7 @@ const Sales = () => {
                 <div className="flex space-x-2">
                   <button
                     type="submit"
-                    className="flex-1 bg-primary hover:bg-primary/90 text-white py-2 rounded-lg font-medium transition-colors"
+                    className="flex-1 bg-primary hover:bg-primary/90 text-white py-2 rounded-lg font-medium transition-colors cursor-pointer"
                   >
                     Guardar
                   </button>
@@ -495,7 +495,7 @@ const Sales = () => {
                       setShowClienteForm(false);
                       resetCliente();
                     }}
-                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg font-medium transition-colors"
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg font-medium transition-colors cursor-pointer"
                   >
                     Cancelar
                   </button>
@@ -539,7 +539,7 @@ const Sales = () => {
                   {...registerVenta("metodo_pago", {
                     required: "Selecciona un método de pago",
                   })}
-                  className="w-full px-4 py-3 border-2 border-secondary rounded-lg focus:border-button focus:outline-none"
+                  className="w-full px-4 py-3 border-2 border-secondary rounded-lg focus:border-button focus:outline-none cursor-pointer"
                 >
                   <option value="">Seleccionar...</option>
                   <option value="efectivo">Efectivo</option>

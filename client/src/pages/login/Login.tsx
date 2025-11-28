@@ -81,22 +81,31 @@ const Login: React.FC = () => {
           navigate("/dashboard/productos/crear");
         }
 
-      }, 1000); // Solo 1 segundo de loading
+      // Mostrar mensaje de bienvenida
+      alert(`Bienvenido ${response.user.nombre} ✅`);
+      
+      // Redirigir según el rol del usuario
+      if (response.user.rol === "cajero") {
+        navigate("/dashboard/empleado");
+      } else {
+        navigate("/dashboard");
+      }
 
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error en login:", err);
       setProgress(0);
         
       // Manejo mejorado de errores
       let errorMessage = "Error al iniciar sesión. Verifica tus credenciales.";
       
-      if (err.response) {
+      if (err && typeof err === 'object' && 'response' in err) {
         // Error del servidor
-        errorMessage = err.response.data?.error || err.response.data?.message || errorMessage;
-      } else if (err.request) {
+        const response = (err as { response?: { data?: { error?: string; message?: string } } }).response;
+        errorMessage = response?.data?.error || response?.data?.message || errorMessage;
+      } else if (err && typeof err === 'object' && 'request' in err) {
         // Error de conexión
         errorMessage = "Error de conexión con el servidor. Verifica tu conexión a internet.";
-      } else {
+      } else if (err instanceof Error) {
         // Otros errores
         errorMessage = err.message || errorMessage;
       }
@@ -161,7 +170,7 @@ const Login: React.FC = () => {
                 <p className="text-red-700 text-sm flex-1">{error}</p>
                 <button 
                   onClick={() => setError("")}
-                  className="text-red-500 hover:text-red-700 transition-colors flex-shrink-0"
+                  className="text-red-500 hover:text-red-700 transition-colors flex-shrink-0 cursor-pointer"
                 >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -241,7 +250,7 @@ const Login: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                    className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50 cursor-pointer"
                     disabled={isLoading}
                   >
                     {showPassword ? (
@@ -283,7 +292,29 @@ const Login: React.FC = () => {
                 </div>
               </div>
 
-              {/* Botón de Login con Loading de 1 segundo */}
+              {/* Recordarme */}
+              <div className="flex items-center justify-between">
+                <label className="flex items-center cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 text-button bg-gray-100 border-gray-300 rounded focus:ring-button focus:ring-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isLoading}
+                  />
+                  <span className="ml-2 text-sm text-gray-600 group-hover:text-gray-800">
+                    Recordarme
+                  </span>
+                </label>
+                <a
+                  href="#"
+                  className="text-sm text-button hover:text-button-hover font-medium transition-colors cursor-pointer"
+                >
+                  ¿Olvidaste tu contraseña?
+                </a>
+              </div>
+
+              {/* Botón de Login */}
               <button
                 type="submit"
                 disabled={isLoading}

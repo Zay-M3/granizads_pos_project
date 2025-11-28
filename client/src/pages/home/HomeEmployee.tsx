@@ -130,7 +130,7 @@ const HomeEmployee = () => {
           </p>
           <button
             onClick={() => navigate("/dashboard/ventas/crear")}
-            className="bg-linear-to-r from-button to-button-hover text-white px-8 py-4 rounded-xl font-bold text-lg hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center space-x-2 mx-auto"
+            className="bg-linear-to-r from-button to-button-hover text-white px-8 py-4 rounded-xl font-bold text-lg hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center space-x-2 mx-auto cursor-pointer"
           >
             <svg
               className="w-6 h-6"
@@ -156,7 +156,7 @@ const HomeEmployee = () => {
           <h2 className="text-xl font-display font-bold text-primary-dark">
             Mis Últimas Ventas
           </h2>
-          <button className="text-sm font-medium text-button hover:text-button-hover transition-colors">
+          <button className="text-sm font-medium text-button hover:text-button-hover transition-colors cursor-pointer">
             Ver todas →
           </button>
         </div>
@@ -193,7 +193,7 @@ const HomeEmployee = () => {
           ].map((sale, index) => (
             <div
               key={index}
-              className="flex items-center justify-between p-4 border-2 border-secondary rounded-lg hover:border-button transition-colors"
+              className="flex items-center justify-between p-4 border-2 border-secondary rounded-lg hover:border-button transition-colors cursor-pointer"
             >
               <div className="flex items-center space-x-4">
                 <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">

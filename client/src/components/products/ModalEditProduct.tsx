@@ -135,7 +135,7 @@ const ModalEditProduct = ({ isOpen, onClose, product, onSave }: ModalEditProduct
             </h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-secondary rounded-lg transition-colors"
+              className="p-2 hover:bg-secondary rounded-lg transition-colors cursor-pointer"
             >
               <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -186,7 +186,7 @@ const ModalEditProduct = ({ isOpen, onClose, product, onSave }: ModalEditProduct
                 name="id_categoria"
                 value={formData.id_categoria}
                 onChange={handleChange}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all cursor-pointer ${
                   errors.id_categoria 
                     ? 'border-red-500 focus:ring-red-500' 
                     : 'border-secondary focus:ring-button'
@@ -220,7 +220,7 @@ const ModalEditProduct = ({ isOpen, onClose, product, onSave }: ModalEditProduct
                     key={emoji}
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, tipo: emoji }))}
-                    className={`text-2xl p-2 rounded-lg border-2 transition-all hover:scale-110 ${
+                    className={`text-2xl p-2 rounded-lg border-2 transition-all hover:scale-110 cursor-pointer ${
                       formData.tipo === emoji 
                         ? 'border-button bg-button/10' 
                         : 'border-secondary hover:border-button/50'
@@ -300,13 +300,13 @@ const ModalEditProduct = ({ isOpen, onClose, product, onSave }: ModalEditProduct
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 border border-secondary text-gray-700 rounded-lg font-medium hover:bg-secondary transition-all"
+              className="px-6 py-3 border border-secondary text-gray-700 rounded-lg font-medium hover:bg-secondary transition-all cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-6 py-3 bg-linear-to-r from-button to-button-hover text-white rounded-lg font-bold hover:shadow-lg transition-all flex items-center space-x-2"
+              className="px-6 py-3 bg-linear-to-r from-button to-button-hover text-white rounded-lg font-bold hover:shadow-lg transition-all flex items-center space-x-2 cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

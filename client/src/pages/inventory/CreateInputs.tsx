@@ -65,7 +65,7 @@ const CreateInputs = () => {
         </div>
         <button
           onClick={() => navigate('/dashboard/inventario')}
-          className="text-gray-600 hover:text-primary-dark transition-colors flex items-center space-x-2"
+          className="text-gray-600 hover:text-primary-dark transition-colors flex items-center space-x-2 cursor-pointer"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -115,7 +115,7 @@ const CreateInputs = () => {
                 </label>
                 <select
                   {...register("unidad_medida", { required: "La unidad es obligatoria" })}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-button ${
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-button cursor-pointer ${
                     errors.unidad_medida ? "border-red-500" : "border-gray-300"
                   }`}
                 >
@@ -296,7 +296,7 @@ const CreateInputs = () => {
           <div className="bg-white rounded-xl p-6 shadow-sm space-y-3">
             <button
               type="submit"
-              className="w-full bg-linear-to-r from-button to-button-hover text-white py-3 rounded-lg font-bold hover:shadow-lg transition-all flex items-center justify-center space-x-2"
+              className="w-full bg-linear-to-r from-button to-button-hover text-white py-3 rounded-lg font-bold hover:shadow-lg transition-all flex items-center justify-center space-x-2 cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -307,7 +307,7 @@ const CreateInputs = () => {
             <button
               type="button"
               onClick={handleCancel}
-              className="w-full bg-white border-2 border-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-50 transition-all"
+              className="w-full bg-white border-2 border-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-50 transition-all cursor-pointer"
             >
               Cancelar
             </button>
