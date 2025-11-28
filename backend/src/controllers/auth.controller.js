@@ -53,7 +53,7 @@ export const login = async (req, res) => {
     const isMatch = await bcrypt.compare(contrasena, user.contrasena);
     if (!isMatch) {
       return res.status(401).json({
-        error: "Contraseña incorrecta"
+        error: "Usuario o contraseña incorrectas " 
       });
     }
 
