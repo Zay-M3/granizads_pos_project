@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { getProductos } from "@api/productos.api";
 import { createCliente } from "@api/clientes.api";
 import { createVenta } from "@api/ventas.api";
-import { createFactura } from "@api/facturas.api";
 import type { Producto } from "@utils/CreateProductsUtil";
 import type { DetalleVenta } from "@utils/VentasUtils";
 
@@ -15,6 +14,7 @@ interface ClienteFormData {
 
 interface VentaFormData {
   metodo_pago: "efectivo" | "tarjeta" | "transferencia";
+  id_cliente?: number | null;
 }
 
 interface DetalleCarrito {
@@ -25,6 +25,12 @@ interface DetalleCarrito {
   subtotal: number;
 }
 
+interface ClienteResponse {
+  id_cliente: number;
+  cedula: string;
+  nombre: string;
+}
+
 const Sales = () => {
   const navigate = useNavigate();
   const [productos, setProductos] = useState<Producto[]>([]);
@@ -32,6 +38,7 @@ const Sales = () => {
   const [productoSeleccionado, setProductoSeleccionado] = useState<number>(0);
   const [cantidadProducto, setCantidadProducto] = useState<number>(1);
   const [showClienteForm, setShowClienteForm] = useState(false);
+  const [clienteRegistrado, setClienteRegistrado] = useState<ClienteResponse | null>(null);
 
   const {
     register: registerCliente,
@@ -161,48 +168,39 @@ const Sales = () => {
         return;
       }
 
-      // Preparar detalles de venta
+      // Preparar detalles de venta según el formato que espera el backend
       const detalles: DetalleVenta[] = carrito.map((item) => ({
         id_producto: item.id_producto,
         cantidad: item.cantidad,
         precio_unitario: item.precio_unitario,
       }));
 
-      // Crear venta
-      const ventaResponse = await createVenta({
-        id_empleado,
+      // Preparar datos para la venta según el backend analizado
+      const ventaData = {
+        id_cliente: clienteRegistrado?.id_cliente || null, // El backend acepta null
+        id_empleado: id_empleado,
         metodo_pago: data.metodo_pago,
-        detalles,
-      });
-      const id_venta = ventaResponse.venta.id_venta;
+        detalles: detalles
+      };
 
-      // Generar código CUFIN simulado (en producción usar algoritmo DIAN)
-      const codigoCUFIN = `CUFIN${Date.now()}${Math.random()
-        .toString(36)
-        .substring(2, 15)
-        .toUpperCase()}`;
+      console.log("Enviando datos de venta:", ventaData);
 
-      // Crear factura electrónica
-      await createFactura({
-        id_venta,
-        codigo_cufin: codigoCUFIN,
-        estado_envio: "enviado",
-      });
-
+      // Crear venta (sin factura electrónica)
+      const ventaResponse = await createVenta(ventaData);
+      
       alert("¡Venta registrada exitosamente!");
       
       // Limpiar formulario
       setCarrito([]);
       resetCliente();
       setShowClienteForm(false);
+      setClienteRegistrado(null);
       
       // Redirigir o mostrar resumen
       navigate("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error al procesar venta:", error);
-      const errorMessage =
-        (error as { response?: { data?: { error?: string } } }).response?.data
-          ?.error || "Error al procesar la venta";
+      const errorMessage = error.response?.data?.error || error.message || "Error al procesar la venta";
       alert(errorMessage);
     }
   };
@@ -210,19 +208,24 @@ const Sales = () => {
   // Registrar cliente opcional
   const onSubmitCliente = async (data: ClienteFormData) => {
     try {
-      const clienteResponse = await createCliente({
+      const clienteResponse: ClienteResponse = await createCliente({
         cedula: data.cedula,
         nombre: data.nombre,
       });
+      setClienteRegistrado(clienteResponse);
       alert(`Cliente registrado: ${clienteResponse.nombre}`);
       setShowClienteForm(false);
-    } catch (error) {
+      resetCliente();
+    } catch (error: any) {
       console.error("Error al registrar cliente:", error);
-      const errorMessage =
-        (error as { response?: { data?: { error?: string } } }).response?.data
-          ?.error || "Error al registrar cliente";
+      const errorMessage = error.response?.data?.error || error.message || "Error al registrar cliente";
       alert(errorMessage);
     }
+  };
+
+  // Remover cliente registrado
+  const removerCliente = () => {
+    setClienteRegistrado(null);
   };
 
   return (
@@ -416,7 +419,25 @@ const Sales = () => {
           {/* Cliente opcional */}
           <div className="bg-white rounded-xl p-6 shadow-sm">
             <h3 className="font-bold text-gray-800 mb-3">Cliente (Opcional)</h3>
-            {!showClienteForm ? (
+            
+            {clienteRegistrado ? (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-medium text-green-800">{clienteRegistrado.nombre}</p>
+                    <p className="text-sm text-green-600">Cédula: {clienteRegistrado.cedula}</p>
+                  </div>
+                  <button
+                    onClick={removerCliente}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ) : !showClienteForm ? (
               <button
                 onClick={() => setShowClienteForm(true)}
                 className="w-full py-2 border-2 border-button text-button hover:bg-button hover:text-white rounded-lg font-medium transition-colors cursor-pointer"
@@ -535,7 +556,7 @@ const Sales = () => {
               <button
                 type="submit"
                 disabled={isSubmitting || carrito.length === 0}
-                className="w-full bg-linear-to-r from-button to-button-hover text-white py-4 rounded-lg font-bold text-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
+                className="w-full bg-gradient-to-r from-button to-button-hover text-white py-4 rounded-lg font-bold text-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
               >
                 {isSubmitting ? (
                   <>

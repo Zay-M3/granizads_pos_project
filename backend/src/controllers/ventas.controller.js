@@ -205,12 +205,6 @@ export const deleteVenta = async (req, res) => {
       [id]
     );
 
-    // Eliminar facturas electrónicas relacionadas si existen
-    await client.query(
-      `DELETE FROM facturas_electronicas WHERE id_venta = $1`,
-      [id]
-    );
-
     // Finalmente eliminar la venta
     const result = await client.query(
       `DELETE FROM ventas WHERE id_venta = $1`,
@@ -385,14 +379,8 @@ async function getVentaCompleta(id_venta, client = pool) {
     [id_venta]
   );
 
-  const facturaResult = await client.query(
-    `SELECT * FROM facturas_electronicas WHERE id_venta = $1`,
-    [id_venta]
-  );
-
   return {
     venta: ventaResult.rows[0],
-    detalles: detallesResult.rows,
-    factura_electronica: facturaResult.rows[0] || null
+    detalles: detallesResult.rows
   };
 }

@@ -4,7 +4,7 @@ import { pool } from "../config/db.js";
 // Obtener todos los productos con información de categoría
 export const getProductos = async (req, res) => {
   try {
-    const { categoria, tipo, disponibilidad } = req.query;
+    const { categoria, disponibilidad } = req.query;
     
     let query = `
       SELECT 
@@ -25,12 +25,6 @@ export const getProductos = async (req, res) => {
       paramCount++;
       conditions.push(`c.nombre ILIKE $${paramCount}`);
       params.push(`%${categoria}%`);
-    }
-
-    if (tipo) {
-      paramCount++;
-      conditions.push(`p.tipo = $${paramCount}`);
-      params.push(tipo);
     }
 
     if (conditions.length > 0) {
@@ -55,12 +49,9 @@ export const getProductoById = async (req, res) => {
       SELECT 
         p.*, 
         c.nombre AS categoria_nombre, 
-        c.descripcion AS categoria_descripcion,
-        u.nombre AS empleado_nombre
+        c.descripcion AS categoria_descripcion
       FROM productos p
       LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
-      LEFT JOIN empleados e ON p.id_empleado = e.id_empleado
-      LEFT JOIN usuarios u ON e.id_usuario = u.id_usuario
       WHERE p.id_producto = $1
     `, [id]);
 
@@ -90,7 +81,7 @@ export const getProductoById = async (req, res) => {
 
 // Crear producto
 export const createProducto = async (req, res) => {
-  const { id_categoria, id_empleado, nombre, tipo, precio, descripcion, receta } = req.body;
+  const { id_categoria, nombre, precio, descripcion, receta } = req.body;
 
   if (!nombre || !precio || !id_categoria) {
     return res.status(400).json({ 
@@ -113,12 +104,12 @@ export const createProducto = async (req, res) => {
       return res.status(404).json({ error: "Categoría no encontrada" });
     }
 
-    // Crear producto
+    // Crear producto (CORREGIDO: solo 4 parámetros en lugar de 6)
     const productoResult = await client.query(
-      `INSERT INTO productos (id_categoria, id_empleado, nombre, tipo, precio, descripcion)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO productos (id_categoria, nombre, precio, descripcion)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [id_categoria, id_empleado || null, nombre, tipo || null, precio, descripcion || null]
+      [id_categoria, nombre, precio, descripcion || null]
     );
 
     const producto = productoResult.rows[0];
@@ -177,9 +168,9 @@ export const createProducto = async (req, res) => {
 // Actualizar producto
 export const updateProducto = async (req, res) => {
   const { id } = req.params;
-  const { id_categoria, id_empleado, nombre, tipo, precio, descripcion } = req.body;
+  const { id_categoria, nombre, precio, descripcion } = req.body;
 
-  if (!id_categoria && !id_empleado && !nombre && !tipo && !precio && !descripcion) {
+  if (!id_categoria && !nombre && !precio && !descripcion) {
     return res.status(400).json({ error: "No hay campos para actualizar" });
   }
 
@@ -219,17 +210,10 @@ export const updateProducto = async (req, res) => {
       fields.push(`id_categoria = $${fields.length + 1}`);
       values.push(id_categoria);
     }
-    if (id_empleado !== undefined) {
-      fields.push(`id_empleado = $${fields.length + 1}`);
-      values.push(id_empleado);
-    }
+    
     if (nombre) {
       fields.push(`nombre = $${fields.length + 1}`);
       values.push(nombre);
-    }
-    if (tipo !== undefined) {
-      fields.push(`tipo = $${fields.length + 1}`);
-      values.push(tipo);
     }
     if (precio) {
       fields.push(`precio = $${fields.length + 1}`);
@@ -372,12 +356,9 @@ async function getProductoCompleto(id_producto, client = pool) {
     SELECT 
       p.*, 
       c.nombre AS categoria_nombre, 
-      c.descripcion AS categoria_descripcion,
-      u.nombre AS empleado_nombre
+      c.descripcion AS categoria_descripcion
     FROM productos p
     LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
-    LEFT JOIN empleados e ON p.id_empleado = e.id_empleado
-    LEFT JOIN usuarios u ON e.id_usuario = u.id_usuario
     WHERE p.id_producto = $1
   `, [id_producto]);
 

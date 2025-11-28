@@ -4,19 +4,47 @@ import { useNavigate } from "react-router-dom";
 import { loginRequest } from "@api/auth.api";
 import type { LoginData } from "@utils/LoginUtils";
 
+// Componente de Toast para notificaciones
+const Toast = ({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+      type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`}>
+      <div className="flex items-center justify-between">
+        <span>{message}</span>
+
+        <button onClick={onClose} className="ml-4 text-white hover:text-gray-200">
+          ×
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [rememberMe, setRememberMe] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [progress, setProgress] = useState<number>(0);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+  };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+    setProgress(0);
 
     try {
       const loginData: LoginData = {
@@ -24,19 +52,34 @@ const Login: React.FC = () => {
         contrasena: password,
       };
 
+      // Simular progreso durante 1 segundo (más rápido)
+      const progressInterval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(progressInterval);
+            return 100;
+          }
+          return prev + 4; // 1000ms / 25 pasos = 4% por paso
+        });
+      }, 40); // 1000ms / 25 pasos = 40ms por paso
+
       const response = await loginRequest(loginData);
 
-      // Guardar token y usuario en localStorage
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("user", JSON.stringify(response.user));
+      // Esperar a que complete la animación de 1 segundo
+      setTimeout(() => {
+        // Guardar token y usuario en localStorage
+        localStorage.setItem("token", response.token);
+        localStorage.setItem("user", JSON.stringify(response.user));
 
-      if (rememberMe) {
-        localStorage.setItem("rememberMe", "true");
-        localStorage.setItem("userEmail", email);
-      } else {
-        localStorage.removeItem("rememberMe");
-        localStorage.removeItem("userEmail");
-      }
+        // Mostrar mensaje de bienvenida con toast
+        showToast(`¡Bienvenido ${response.user.nombre}!`, 'success');
+        
+        // Redirigir inmediatamente (sin delay adicional)
+        if (response.user.rol === "cajero") {
+          navigate("/dashboard/empleado");
+        } else {
+          navigate("/dashboard/productos/crear");
+        }
 
       // Mostrar mensaje de bienvenida
       alert(`Bienvenido ${response.user.nombre} ✅`);
@@ -50,6 +93,7 @@ const Login: React.FC = () => {
 
     } catch (err) {
       console.error("Error en login:", err);
+      setProgress(0);
         
       // Manejo mejorado de errores
       let errorMessage = "Error al iniciar sesión. Verifica tus credenciales.";
@@ -67,24 +111,32 @@ const Login: React.FC = () => {
       }
       
       setError(errorMessage);
-    } finally {
+      showToast(errorMessage, 'error');
       setIsLoading(false);
     }
   };
 
-  // Cargar email guardado si existe - CORREGIDO: usar useEffect en lugar de useState
+  // Cargar email guardado si existe
   useEffect(() => {
     const savedEmail = localStorage.getItem("userEmail");
     const savedRememberMe = localStorage.getItem("rememberMe");
     
     if (savedEmail && savedRememberMe === "true") {
       setEmail(savedEmail);
-      setRememberMe(true);
     }
   }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-primary-dark via-card to-primary p-4">
+      {/* Toast Notification */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
+
       {/* Fondo decorativo */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-20 w-72 h-72 bg-button/20 rounded-full blur-3xl"></div>
@@ -266,16 +318,41 @@ const Login: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-linear-to-r from-button to-button-hover text-white py-3 rounded-lg font-bold text-lg hover:shadow-lg hover:scale-[1.02] transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+                className="w-full bg-linear-to-r from-button to-button-hover text-white py-3 rounded-lg font-bold text-lg hover:shadow-lg hover:scale-[1.02] transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none relative overflow-hidden"
               >
                 {isLoading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>Iniciando sesión...</span>
-                  </>
+                  <div className="flex flex-col items-center justify-center w-full">
+                    {/* Barra de progreso animada (más rápida) */}
+                    <div className="w-full bg-white/30 rounded-full h-1.5 mb-3 overflow-hidden">
+                      <div 
+                        className="h-full bg-white rounded-full transition-all duration-75 ease-linear"
+                        style={{ width: `${progress}%` }}
+                      ></div>
+                    </div>
+                    
+                    {/* Contenido del loading */}
+                    <div className="flex items-center space-x-3">
+                      {/* Spinner animado (más rápido) */}
+                      <div className="relative">
+                        <div className="w-5 h-5 border-2 border-white/30 rounded-full"></div>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin absolute top-0 left-0" 
+                             style={{ animationDuration: '0.8s' }}></div>
+                      </div>
+                      
+                      {/* Texto con puntos animados (más rápido) */}
+                      <div className="flex items-center space-x-1">
+                        <span className="text-white font-medium">Iniciando sesión</span>
+                        <div className="flex space-x-1">
+                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" 
+                               style={{ animationDelay: '0ms', animationDuration: '0.6s' }}></div>
+                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" 
+                               style={{ animationDelay: '75ms', animationDuration: '0.6s' }}></div>
+                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" 
+                               style={{ animationDelay: '150ms', animationDuration: '0.6s' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <>
                     <span>Iniciar Sesión</span>
