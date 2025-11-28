@@ -168,7 +168,7 @@ const ListInventory = () => {
             <select 
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
             >
               <option value="all">Todos los estados</option>
               <option value="available">Stock Normal</option>
@@ -180,7 +180,7 @@ const ListInventory = () => {
             <div className="flex bg-secondary rounded-lg p-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
+                className={`p-2 rounded cursor-pointer ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
               >
                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -188,7 +188,7 @@ const ListInventory = () => {
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
+                className={`p-2 rounded cursor-pointer ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
               >
                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -248,7 +248,7 @@ const ListInventory = () => {
                   <div className="flex space-x-2">
                     <button 
                       onClick={() => handleEditInsumo(insumo)}
-                      className="p-2 bg-button/10 text-button rounded-lg hover:bg-button hover:text-white transition-all"
+                      className="p-2 bg-button/10 text-button rounded-lg hover:bg-button hover:text-white transition-all cursor-pointer"
                       title="Editar"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

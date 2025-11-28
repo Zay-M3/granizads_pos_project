@@ -87,7 +87,7 @@ const ModalEditInputs = ({ isOpen, onClose, insumo, onSave }: ModalEditInputsPro
             </h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-secondary rounded-lg transition-colors"
+              className="p-2 hover:bg-secondary rounded-lg transition-colors cursor-pointer"
             >
               <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -146,7 +146,7 @@ const ModalEditInputs = ({ isOpen, onClose, insumo, onSave }: ModalEditInputsPro
                 <select
                   id="unidad_medida"
                   {...register("unidad_medida", { required: "La unidad es obligatoria" })}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all cursor-pointer ${
                     errors.unidad_medida 
                       ? 'border-red-500 focus:ring-red-500' 
                       : 'border-secondary focus:ring-button'
@@ -375,13 +375,13 @@ const ModalEditInputs = ({ isOpen, onClose, insumo, onSave }: ModalEditInputsPro
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 border border-secondary text-gray-700 rounded-lg font-medium hover:bg-secondary transition-all"
+              className="px-6 py-3 border border-secondary text-gray-700 rounded-lg font-medium hover:bg-secondary transition-all cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-6 py-3 bg-linear-to-r from-button to-button-hover text-white rounded-lg font-bold hover:shadow-lg transition-all flex items-center space-x-2"
+              className="px-6 py-3 bg-linear-to-r from-button to-button-hover text-white rounded-lg font-bold hover:shadow-lg transition-all flex items-center space-x-2 cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

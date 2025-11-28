@@ -118,14 +118,14 @@ const ConfirmAction = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-all"
+            className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-all cursor-pointer"
           >
             {cancelText}
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            className={`px-5 py-2.5 ${styles.buttonBg} text-white rounded-lg font-bold transition-all`}
+            className={`px-5 py-2.5 ${styles.buttonBg} text-white rounded-lg font-bold transition-all cursor-pointer`}
           >
             {confirmText}
           </button>

@@ -288,7 +288,7 @@ const CreateProducts = () => {
                 <button
                   type="button"
                   onClick={addInsumo}
-                  className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                  className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors cursor-pointer"
                 >
                   Agregar Insumo
                 </button>
@@ -320,7 +320,7 @@ const CreateProducts = () => {
                         <button
                           type="button"
                           onClick={() => removeInsumo(index)}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-red-500 hover:text-red-700 cursor-pointer"
                         >
                           Eliminar
                         </button>
@@ -338,14 +338,14 @@ const CreateProducts = () => {
               <button
                 type="button"
                 onClick={() => navigate('/dashboard/productos')}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-400"
+                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-400 cursor-pointer"
               >
                 {isSubmitting ? "Guardando..." : "Crear Producto"}
               </button>
