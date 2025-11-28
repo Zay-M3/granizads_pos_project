@@ -9,6 +9,27 @@ import type { Categoria } from "@utils/CategoryUtils";
 import type { InsumoReceta, ProductoFormData } from "@utils/CreateProductsUtil";
 import type { Insumo } from "@utils/InventoryUtils";
 
+// Componente de Toast simple
+const Toast = ({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 4000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+      type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`}>
+      <div className="flex items-center justify-between">
+        <span>{message}</span>
+        <button onClick={onClose} className="ml-4 text-white hover:text-gray-200">
+          ×
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const CreateProducts = () => {
   const navigate = useNavigate();
   const [isModalCategoriesOpen, setIsModalCategoriesOpen] = useState(false);
@@ -16,6 +37,11 @@ const CreateProducts = () => {
   const [insumosDisponibles, setInsumosDisponibles] = useState<Insumo[]>([]);
   const [insumos, setInsumos] = useState<InsumoReceta[]>([]);
   const [newInsumo, setNewInsumo] = useState({ id_insumo: 0, cantidad_usada: 0 });
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+  };
 
   // Cargar categorías desde la API
   useEffect(() => {
@@ -25,7 +51,7 @@ const CreateProducts = () => {
         setCategories(data);
       } catch (error) {
         console.error('Error al cargar categorías:', error);
-        alert('Error al cargar las categorías');
+        showToast('Error al cargar las categorías', 'error');
       }
     };
     fetchCategories();
@@ -53,7 +79,6 @@ const CreateProducts = () => {
     defaultValues: {
       id_categoria: 0,
       nombre: "",
-      tipo: "",
       precio: 0,
       descripcion: "",
       receta: [],
@@ -62,32 +87,26 @@ const CreateProducts = () => {
 
   const onSubmit = async (data: ProductoFormData) => {
     try {
-      // Obtener el id_empleado del usuario logueado
-      const userStr = localStorage.getItem('user');
-      const user = userStr ? JSON.parse(userStr) : null;
-      const id_empleado = user?.empleado?.id_empleado;
-
-      if (!id_empleado) {
-        alert("No se pudo obtener la información del empleado. Por favor, inicia sesión nuevamente.");
-        return;
-      }
-
       const productData = {
         ...data,
-        id_empleado,
         receta: insumos,
       };
       
       await createProducto(productData);
       
-      alert("Producto creado exitosamente ✅");
+      showToast("Producto creado exitosamente ✅", 'success');
       reset();
       setInsumos([]);
-      navigate('/dashboard/productos');
+      
+      // Navegar después de un breve delay para que se vea el toast
+      setTimeout(() => {
+        navigate('/dashboard/productos');
+      }, 1500);
+      
     } catch (error) {
       console.error("Error al crear producto:", error);
       const errorMessage = (error as { response?: { data?: { error?: string } } }).response?.data?.error || "Error al crear el producto";
-      alert(errorMessage + " ❌");
+      showToast(errorMessage + " ❌", 'error');
     }
   };
 
@@ -96,13 +115,13 @@ const CreateProducts = () => {
       // Verificar si el insumo existe
       const insumoExiste = insumosDisponibles.find(i => i.id_insumo === newInsumo.id_insumo);
       if (!insumoExiste) {
-        alert("El insumo seleccionado no existe");
+        showToast("El insumo seleccionado no existe", 'error');
         return;
       }
       setInsumos([...insumos, newInsumo]);
       setNewInsumo({ id_insumo: 0, cantidad_usada: 0 });
     } else {
-      alert("Por favor completa todos los campos del insumo");
+      showToast("Por favor completa todos los campos del insumo", 'error');
     }
   };
 
@@ -112,6 +131,15 @@ const CreateProducts = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      {/* Toast Notification */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
+
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -150,24 +178,6 @@ const CreateProducts = () => {
                 />
                 {errors.nombre && (
                   <p className="text-red-500 text-sm mt-1">{errors.nombre.message}</p>
-                )}
-              </div>
-
-              {/* Tipo */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo *
-                </label>
-                <input
-                  {...register("tipo", {
-                    required: "El tipo es obligatorio",
-                  })}
-                  type="text"
-                  placeholder="Ej: coctel, licor, bebida"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                {errors.tipo && (
-                  <p className="text-red-500 text-sm mt-1">{errors.tipo.message}</p>
                 )}
               </div>
 
@@ -360,6 +370,7 @@ const CreateProducts = () => {
           onSave={(newCategory) => {
             setCategories([...categories, newCategory]);
             setIsModalCategoriesOpen(false);
+            showToast("Categoría creada exitosamente", 'success');
           }}
         />
       </div>
