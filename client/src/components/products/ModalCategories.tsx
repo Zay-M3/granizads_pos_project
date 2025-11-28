@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ModalSuccess from "../ModalSuccess";
 
 interface Category {
   id_categoria: number;
@@ -15,6 +16,7 @@ interface ModalCategoriesProps {
 const ModalCategories = ({ isOpen, onClose, onSave }: ModalCategoriesProps) => {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
 
   if (!isOpen) return null;
 
@@ -29,6 +31,7 @@ const ModalCategories = ({ isOpen, onClose, onSave }: ModalCategoriesProps) => {
       onSave(newCategory);
       setNombre("");
       setDescripcion("");
+      setShowSuccess(true);
     }
   };
 
@@ -113,6 +116,18 @@ const ModalCategories = ({ isOpen, onClose, onSave }: ModalCategoriesProps) => {
           </div>
         </form>
       </div>
+
+      {/* Modal de éxito */}
+      <ModalSuccess
+        isOpen={showSuccess}
+        onClose={() => {
+          setShowSuccess(false);
+          onClose();
+        }}
+        title="¡Categoría Creada!"
+        message="La nueva categoría ha sido agregada exitosamente al sistema."
+        confirmText="Continuar"
+      />
     </div>
   );
 };

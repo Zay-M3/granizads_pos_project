@@ -133,7 +133,7 @@ export const createUsuario = async (req, res) => {
   }
 };
 
-// 🟢 Actualizar usuario
+// 🟢 Actualizar usuario (y empleado si hay fecha_nacimiento)
 export const updateUsuario = async (req, res) => {
   const { id } = req.params;
   const payload = req.body;
@@ -143,40 +143,86 @@ export const updateUsuario = async (req, res) => {
   }
 
   try {
-    let fields = [];
-    let values = [];
-    let i = 1;
+    await pool.query("BEGIN");
+
+    // Separar campos de usuario y empleado
+    const usuarioFields = {};
+    const empleadoFields = {};
 
     for (const [key, value] of Object.entries(payload)) {
-      if (key === "contrasena") {
-        const hash = await bcrypt.hash(value, 10);
-        fields.push(`contrasena = $${i++}`);
-        values.push(hash);
+      if (key === "fecha_nacimiento") {
+        empleadoFields[key] = value;
       } else {
-        fields.push(`${key} = $${i++}`);
-        values.push(value);
+        usuarioFields[key] = value;
       }
     }
 
-    const result = await pool.query(
-      `
-      UPDATE usuarios
-      SET ${fields.join(", ")}
-      WHERE id_usuario = $${i}
-      RETURNING *
-      `,
-      [...values, id]
-    );
+    let updatedUser = null;
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Usuario no encontrado" });
+    // Actualizar usuario si hay campos
+    if (Object.keys(usuarioFields).length > 0) {
+      let fields = [];
+      let values = [];
+      let i = 1;
+
+      for (const [key, value] of Object.entries(usuarioFields)) {
+        if (key === "contrasena") {
+          const hash = await bcrypt.hash(value, 10);
+          fields.push(`contrasena = $${i++}`);
+          values.push(hash);
+        } else {
+          fields.push(`${key} = $${i++}`);
+          values.push(value);
+        }
+      }
+
+      const result = await pool.query(
+        `
+        UPDATE usuarios
+        SET ${fields.join(", ")}
+        WHERE id_usuario = $${i}
+        RETURNING *
+        `,
+        [...values, id]
+      );
+
+      if (result.rows.length === 0) {
+        await pool.query("ROLLBACK");
+        return res.status(404).json({ error: "Usuario no encontrado" });
+      }
+
+      updatedUser = result.rows[0];
     }
+
+    // Actualizar empleado si hay campos
+    if (Object.keys(empleadoFields).length > 0) {
+      let fields = [];
+      let values = [];
+      let i = 1;
+
+      for (const [key, value] of Object.entries(empleadoFields)) {
+        fields.push(`${key} = $${i++}`);
+        values.push(value);
+      }
+
+      await pool.query(
+        `
+        UPDATE empleados
+        SET ${fields.join(", ")}
+        WHERE id_usuario = $${i}
+        `,
+        [...values, id]
+      );
+    }
+
+    await pool.query("COMMIT");
 
     res.json({
       message: "Usuario actualizado correctamente ✅",
-      usuario: result.rows[0],
+      usuario: updatedUser || { id_usuario: id },
     });
   } catch (error) {
+    await pool.query("ROLLBACK");
     console.error("Error en updateUsuario:", error);
     res.status(500).json({ error: error.message });
   }
