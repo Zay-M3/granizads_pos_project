@@ -7,7 +7,6 @@ import insumosRoutes from "./insumos.routes.js";
 import movimientosRoutes from "./movimientos_inventario.routes.js";
 import ventasRoutes from "./ventas.routes.js";
 import detallesRoutes from "./detalles_compras.routes.js";
-import facturasRoutes from "./facturas.routes.js";
 import clientesRoutes from "./clientes.routes.js";
 
 const router = express.Router();
@@ -20,7 +19,6 @@ router.use("/insumos", insumosRoutes);
 router.use("/movimientos", movimientosRoutes);
 router.use("/ventas", ventasRoutes);
 router.use("/detalles", detallesRoutes);
-router.use("/facturas", facturasRoutes);
 router.use("/clientes", clientesRoutes);
 
 export default router;
