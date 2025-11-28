@@ -62,7 +62,7 @@ const Home = () => {
     0
   );
   const totalProductosVendidos = ventasHoy.reduce(
-    (sum, venta) => sum + (venta.total_items || 0),
+    (sum, venta) => sum + Number(venta.total_items || 0),
     0
   );
   const totalTransacciones = ventasHoy.length;

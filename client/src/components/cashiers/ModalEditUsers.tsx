@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import type { UsuarioFormData } from "@utils/admin/CreateCashierUtils";
 import { updateUsuario } from "@api/usuarios.api";
+import ModalSuccess from "../ModalSuccess";
+import ModalError from "../ModalError";
 
 interface ModalEditUsersProps {
   isOpen: boolean;
@@ -27,6 +29,9 @@ const ModalEditUsers = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Actualizar formData cuando cambie el usuario
   useEffect(() => {
@@ -97,22 +102,34 @@ const ModalEditUsers = ({
 
     if (validate() && formData.id_usuario) {
       try {
-        // Si no se modificó la contraseña, no enviarla
-        const dataToUpdate: Partial<UsuarioFormData> = { ...formData };
-        if (!dataToUpdate.contrasena) {
-          delete dataToUpdate.contrasena;
+        // Preparar datos solo con los campos permitidos
+        const dataToUpdate: Record<string, string | undefined> = {
+          nombre: formData.nombre,
+          correo: formData.correo,
+          telefono: formData.telefono,
+          rol: formData.rol,
+        };
+
+        // Solo incluir fecha_nacimiento si existe
+        if (formData.fecha_nacimiento) {
+          dataToUpdate.fecha_nacimiento = formData.fecha_nacimiento;
+        }
+
+        // Solo incluir contraseña si se modificó
+        if (formData.contrasena && formData.contrasena.trim()) {
+          dataToUpdate.contrasena = formData.contrasena;
         }
 
         await updateUsuario(formData.id_usuario, dataToUpdate);
         onSave(formData);
-        alert("Usuario actualizado exitosamente ✅");
-        onClose();
+        setShowSuccess(true);
       } catch (error) {
         console.error("Error al actualizar usuario:", error);
-        const errorMessage =
+        const errorMsg =
           (error as { response?: { data?: { error?: string } } }).response?.data
             ?.error || "Error al actualizar el usuario";
-        alert(errorMessage + " ❌");
+        setErrorMessage(errorMsg);
+        setShowError(true);
       }
     }
   };
@@ -542,6 +559,26 @@ const ModalEditUsers = ({
           </div>
         </form>
       </div>
+
+      {/* Modal de éxito */}
+      <ModalSuccess
+        isOpen={showSuccess}
+        onClose={() => {
+          setShowSuccess(false);
+          onClose();
+        }}
+        title="¡Usuario Actualizado!"
+        message="Los datos del usuario han sido actualizados exitosamente en el sistema."
+        confirmText="Continuar"
+      />
+
+      {/* Modal de error */}
+      <ModalError
+        isOpen={showError}
+        onClose={() => setShowError(false)}
+        title="Error al Actualizar"
+        message={errorMessage}
+      />
     </div>
   );
 };

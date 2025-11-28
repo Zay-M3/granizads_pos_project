@@ -10,8 +10,8 @@ import ModalError from "@components/ModalError";
 import ModalAlert from "@components/ModalAlert";
 
 interface ClienteFormData {
-  cedula: string;
   nombre: string;
+  correo: string;
 }
 
 interface VentaFormData {
@@ -29,8 +29,8 @@ interface DetalleCarrito {
 
 interface ClienteResponse {
   id_cliente: number;
-  cedula: string;
   nombre: string;
+  correo?: string;
 }
 
 const Sales = () => {
@@ -39,9 +39,9 @@ const Sales = () => {
   const [carrito, setCarrito] = useState<DetalleCarrito[]>([]);
   const [productoSeleccionado, setProductoSeleccionado] = useState<number>(0);
   const [cantidadProducto, setCantidadProducto] = useState<number>(1);
-  const [showClienteForm, setShowClienteForm] = useState(false);
   const [clienteRegistrado, setClienteRegistrado] =
     useState<ClienteResponse | null>(null);
+  const [correoCliente, setCorreoCliente] = useState<string>("");
 
   // Estados para modales
   const [errorModal, setErrorModal] = useState({ isOpen: false, message: "" });
@@ -210,6 +210,7 @@ const Sales = () => {
         id_empleado: id_empleado,
         metodo_pago: data.metodo_pago,
         detalles: detalles,
+        correo_cliente: correoCliente,
       };
 
       console.log("Enviando datos de venta:", ventaData);
@@ -226,7 +227,6 @@ const Sales = () => {
       // Limpiar formulario
       setCarrito([]);
       resetCliente();
-      setShowClienteForm(false);
       setClienteRegistrado(null);
 
       // Redirigir o mostrar resumen después de cerrar modal
@@ -249,17 +249,18 @@ const Sales = () => {
   // Registrar cliente opcional
   const onSubmitCliente = async (data: ClienteFormData) => {
     try {
+      setCorreoCliente(data.correo);
       const clienteResponse: ClienteResponse = await createCliente({
-        cedula: data.cedula,
         nombre: data.nombre,
+        correo: data.correo, // Se envía al backend pero no se guarda en BD
       });
       setClienteRegistrado(clienteResponse);
+
       setAlertModal({
         isOpen: true,
         message: `Cliente registrado: ${clienteResponse.nombre}`,
         type: "success",
       });
-      setShowClienteForm(false);
       resetCliente();
     } catch (error) {
       console.error("Error al registrar cliente:", error);
@@ -485,9 +486,9 @@ const Sales = () => {
 
         {/* Resumen y pago */}
         <div className="space-y-6">
-          {/* Cliente opcional */}
+          {/* Cliente */}
           <div className="bg-white rounded-xl p-6 shadow-sm">
-            <h3 className="font-bold text-gray-800 mb-3">Cliente (Opcional)</h3>
+            <h3 className="font-bold text-gray-800 mb-3">Datos del Cliente</h3>
 
             {clienteRegistrado ? (
               <div className="bg-green-50 border border-green-200 rounded-lg p-3">
@@ -497,12 +498,12 @@ const Sales = () => {
                       {clienteRegistrado.nombre}
                     </p>
                     <p className="text-sm text-green-600">
-                      Cédula: {clienteRegistrado.cedula}
+                      ✓ Cliente registrado
                     </p>
                   </div>
                   <button
                     onClick={removerCliente}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 cursor-pointer"
                   >
                     <svg
                       className="w-4 h-4"
@@ -520,36 +521,11 @@ const Sales = () => {
                   </button>
                 </div>
               </div>
-            ) : !showClienteForm ? (
-              <button
-                onClick={() => setShowClienteForm(true)}
-                className="w-full py-2 border-2 border-button text-button hover:bg-button hover:text-white rounded-lg font-medium transition-colors cursor-pointer"
-              >
-                + Registrar Cliente
-              </button>
             ) : (
               <form
                 onSubmit={handleSubmitCliente(onSubmitCliente)}
                 className="space-y-3"
               >
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Cédula *
-                  </label>
-                  <input
-                    {...registerCliente("cedula", {
-                      required: "La cédula es obligatoria",
-                    })}
-                    type="text"
-                    className="w-full px-4 py-2 border-2 border-secondary rounded-lg focus:border-button focus:outline-none"
-                  />
-                  {errorsCliente.cedula && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errorsCliente.cedula.message}
-                    </p>
-                  )}
-                </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Nombre *
@@ -559,6 +535,7 @@ const Sales = () => {
                       required: "El nombre es obligatorio",
                     })}
                     type="text"
+                    placeholder="Nombre del cliente"
                     className="w-full px-4 py-2 border-2 border-secondary rounded-lg focus:border-button focus:outline-none"
                   />
                   {errorsCliente.nombre && (
@@ -568,24 +545,35 @@ const Sales = () => {
                   )}
                 </div>
 
-                <div className="flex space-x-2">
-                  <button
-                    type="submit"
-                    className="flex-1 bg-primary hover:bg-primary/90 text-white py-2 rounded-lg font-medium transition-colors cursor-pointer"
-                  >
-                    Guardar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowClienteForm(false);
-                      resetCliente();
-                    }}
-                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg font-medium transition-colors cursor-pointer"
-                  >
-                    Cancelar
-                  </button>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Correo Electrónico *
+                  </label>
+                  <input
+                    {...registerCliente("correo", {
+                      required: "El correo es obligatorio",
+                      pattern: {
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        message: "Correo electrónico inválido"
+                      }
+                    })}
+                    type="email"
+                    placeholder="correo@ejemplo.com"
+                    className="w-full px-4 py-2 border-2 border-secondary rounded-lg focus:border-button focus:outline-none"
+                  />
+                  {errorsCliente.correo && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errorsCliente.correo.message}
+                    </p>
+                  )}
                 </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-primary hover:bg-primary/90 text-white py-2 rounded-lg font-medium transition-colors cursor-pointer"
+                >
+                  Registrar Cliente
+                </button>
               </form>
             )}
           </div>

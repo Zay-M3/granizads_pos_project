@@ -42,19 +42,19 @@ export const getClienteById = async (req, res) => {
 // Crear cliente
 // ========================================
 export const createCliente = async (req, res) => {
-  const { cedula, nombre } = req.body;
+  const { nombre } = req.body;
 
-  if (!cedula || !nombre)
+  if (!nombre)
     return res
       .status(400)
-      .json({ error: "cedula y nombre son obligatorios" });
+      .json({ error: "El nombre es obligatorio" });
 
   try {
     const result = await pool.query(
-      `INSERT INTO clientes (cedula, nombre)
-       VALUES ($1, $2)
+      `INSERT INTO clientes ( nombre)
+       VALUES ($1)
        RETURNING *`,
-      [cedula, nombre]
+      [nombre]
     );
 
     res.status(201).json(result.rows[0]);

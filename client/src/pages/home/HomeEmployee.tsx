@@ -1,21 +1,20 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { getVentas } from "@api/ventas.api";
+import { getVentas, getVentaById } from "@api/ventas.api";
 import { getProductos } from "@api/productos.api";
-import type { Venta } from "@utils/VentasUtils";
+import type { Venta, VentaCompleta } from "@utils/VentasUtils";
 import type { Producto } from "@utils/CreateProductsUtil";
+import DetailsSales from "@components/sales/DetailsSales";
 
-interface ProductoVendido {
-  id_producto: number;
-  nombre: string;
-  cantidad: number;
-}
 
 const HomeEmployee = () => {
   const navigate = useNavigate();
   const [ventasHoy, setVentasHoy] = useState<Venta[]>([]);
-  const [productos, setProductos] = useState<Producto[]>([]);
+  const [, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [ventaSeleccionada, setVentaSeleccionada] = useState<VentaCompleta | null>(null);
+  const [loadingVenta, setLoadingVenta] = useState(false);
 
   // Obtener id del empleado del localStorage
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -60,21 +59,27 @@ const HomeEmployee = () => {
   const totalVentasHoy = ventasHoy.reduce((acc, v) => acc + (v.total || 0), 0);
   const totalTransacciones = ventasHoy.length;
   const totalProductosVendidos = ventasHoy.reduce(
-    (acc, v) => acc + (v.total_items || 0),
+    (acc, v) => acc + Number(v.total_items || 0),
     0
   );
 
   // Última venta
   const ultimaVenta = ventasHoy[0];
 
-  // Calcular productos más vendidos (placeholder por ahora)
-  const productosVendidos: ProductoVendido[] = productos
-    .slice(0, 4)
-    .map((p) => ({
-      id_producto: p.id_producto || 0,
-      nombre: p.nombre,
-      cantidad: Math.floor(Math.random() * 15) + 5,
-    }));
+  // Manejar clic en venta para ver detalles
+  const handleVerDetalleVenta = async (idVenta: number) => {
+    try {
+      setLoadingVenta(true);
+      const ventaCompleta = await getVentaById(idVenta);
+      setVentaSeleccionada(ventaCompleta);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error al cargar detalles de la venta:", error);
+      alert("Error al cargar los detalles de la venta");
+    } finally {
+      setLoadingVenta(false);
+    }
+  };
 
   // Formatear moneda
   const formatCurrency = (value: number) => {
@@ -169,7 +174,7 @@ const HomeEmployee = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 font-medium">
-                Productos Vendidos
+                Total de Ventas Hoy
               </p>
               <h3 className="text-3xl font-bold text-primary-dark mt-2">
                 {totalProductosVendidos}
@@ -291,6 +296,7 @@ const HomeEmployee = () => {
             {ventasHoy.slice(0, 4).map((venta, index) => (
               <div
                 key={venta.id_venta || index}
+                onClick={() => venta.id_venta && handleVerDetalleVenta(venta.id_venta)}
                 className="flex items-center justify-between p-4 border-2 border-secondary rounded-lg hover:border-button transition-colors cursor-pointer"
               >
                 <div className="flex items-center space-x-4">
@@ -334,66 +340,22 @@ const HomeEmployee = () => {
         )}
       </div>
 
-      {/* Productos más vendidos por el cajero */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="text-xl font-display font-bold text-primary-dark mb-4">
-          Productos Disponibles
-        </h2>
-        {productosVendidos.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>No hay productos disponibles</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {productosVendidos.map((product, index) => (
-              <div
-                key={product.id_producto}
-                className="p-4 border-2 border-secondary rounded-xl hover:border-button transition-colors"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-3xl">🥤</span>
-                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
-                    #{index + 1}
-                  </span>
-                </div>
-                <h3 className="font-bold text-gray-800 mb-1">
-                  {product.nombre}
-                </h3>
-                <p className="text-sm text-gray-500">Disponible</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Modal de Detalles de Venta */}
+      <DetailsSales
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        ventaCompleta={ventaSeleccionada}
+      />
 
-      {/* Tips para el cajero */}
-      <div className="bg-linear-to-br from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-blue-200">
-        <div className="flex items-start space-x-4">
-          <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center shrink-0">
-            <svg
-              className="w-6 h-6 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-800 mb-2">💡 Consejo del día</h3>
-            <p className="text-gray-700 text-sm">
-              Recuerda verificar siempre el método de pago antes de completar la
-              transacción. ¡Mantén tu caja organizada y cuadrada al final del
-              turno!
-            </p>
+      {/* Loading overlay para cuando se carga una venta */}
+      {loadingVenta && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 shadow-2xl">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-button mx-auto"></div>
+            <p className="text-gray-700 mt-4 font-medium">Cargando detalles...</p>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

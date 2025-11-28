@@ -127,7 +127,7 @@ const Login: React.FC = () => {
                 <div className="relative">
                   <input
                     id="email"
-                    type="email"
+                    type="email"                    
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="usuario@ejemplo.com"

@@ -1,12 +1,13 @@
 // controllers/ventas.controller.js
 import { pool } from "../config/db.js";
 import { consumirIngredientesProducto } from "../services/inventory.services.js";
+import { sendVentaConfirmationEmail } from "../services/sendmails.service.js";
 
 /**
  * Crear una venta con detalles y descuento automático de inventario
  */
 export const createVenta = async (req, res) => {
-  const { id_cliente = null, id_empleado, metodo_pago, detalles } = req.body;
+  const { id_cliente = null, id_empleado, metodo_pago, detalles, correo_cliente } = req.body;
 
   if (!id_empleado || !metodo_pago || !Array.isArray(detalles) || detalles.length === 0) {
     return res.status(400).json({ error: "Faltan campos obligatorios" });
@@ -16,7 +17,7 @@ export const createVenta = async (req, res) => {
   for (const detalle of detalles) {
     if (!detalle.id_producto || !detalle.cantidad || !detalle.precio_unitario) {
       return res.status(400).json({ 
-        error: "Cada detalle debe tener id_producto, cantidad y precio_unitario" 
+        error: "Cada detalle debe tener id del producto, cantidad y precio unitario del producto" 
       });
     }
     if (detalle.cantidad <= 0) {
@@ -74,6 +75,16 @@ export const createVenta = async (req, res) => {
 
     await client.query("COMMIT");
 
+    // Enviar correo de confirmación si el cliente tiene correo registrado
+    
+      await sendVentaConfirmationEmail(
+        correo_cliente,
+        JSON.stringify(detalles),
+        total
+      );
+    
+
+
     // Obtener la venta completa con detalles para la respuesta
     const ventaCompleta = await getVentaCompleta(id_venta, client);
 
@@ -105,7 +116,7 @@ export const getVentas = async (req, res) => {
         v.*, 
         u.nombre AS empleado_nombre, 
         c.nombre AS cliente_nombre,
-        COUNT(dv.id_detalle) as total_items
+        COALESCE(SUM(dv.cantidad), 0) as total_items
       FROM ventas v
       JOIN empleados e ON v.id_empleado = e.id_empleado
       JOIN usuarios u ON e.id_usuario = u.id_usuario
@@ -352,8 +363,7 @@ async function getVentaCompleta(id_venta, client = pool) {
     `SELECT 
         v.*, 
         u.nombre AS empleado_nombre,
-        c.nombre AS cliente_nombre,
-        c.cedula AS cliente_cedula
+        c.nombre AS cliente_nombre
      FROM ventas v
      JOIN empleados e ON v.id_empleado = e.id_empleado
      JOIN usuarios u ON e.id_usuario = u.id_usuario

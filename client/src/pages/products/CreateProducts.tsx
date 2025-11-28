@@ -414,8 +414,6 @@ const CreateProducts = () => {
           onClose={() => setIsModalCategoriesOpen(false)}
           onSave={(newCategory) => {
             setCategories([...categories, newCategory]);
-            setIsModalCategoriesOpen(false);
-            showToast("Categoría creada exitosamente", "success");
           }}
         />
       </div>
