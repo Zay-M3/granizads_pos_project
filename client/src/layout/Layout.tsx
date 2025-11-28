@@ -181,7 +181,7 @@ const Layout = () => {
             onClick={() => navigate("/dashboard")}
           >
             <h1 className="text-2xl font-display font-bold text-primary-dark cursor-pointer">
-              DrinKeo POS
+              DrinKéo POS
             </h1>
             <span className="px-3 py-1 bg-button/10 text-button text-sm font-medium rounded-full">
               Caja Abierta

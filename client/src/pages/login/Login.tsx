@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
@@ -10,9 +11,13 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [rememberMe, setRememberMe] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
     try {
       const loginData: LoginData = {
@@ -29,16 +34,46 @@ const Login: React.FC = () => {
       if (rememberMe) {
         localStorage.setItem("rememberMe", "true");
         localStorage.setItem("userEmail", email);
+      } else {
+        localStorage.removeItem("rememberMe");
+        localStorage.removeItem("userEmail");
       }
 
-      alert(`Bienvenido ${response.user.nombre} ✅`);
+      // Navegar al dashboard
       navigate("/dashboard/productos/crear");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error en login:", err);
-      const errorMessage = (err as { response?: { data?: { error?: string } } }).response?.data?.error || "Error al iniciar sesión. Verifica tus credenciales.";
-      alert(errorMessage + " ❌");
+      
+      // Manejo mejorado de errores
+      let errorMessage = "Error al iniciar sesión. Verifica tus credenciales.";
+      
+      if (err.response) {
+        // Error del servidor
+        errorMessage = err.response.data?.error || err.response.data?.message || errorMessage;
+      } else if (err.request) {
+        // Error de conexión
+        errorMessage = "Error de conexión con el servidor. Verifica tu conexión a internet.";
+      } else {
+        // Otros errores
+        errorMessage = err.message || errorMessage;
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  // Cargar email guardado si existe
+  useState(() => {
+    const savedEmail = localStorage.getItem("userEmail");
+    const savedRememberMe = localStorage.getItem("rememberMe");
+    
+    if (savedEmail && savedRememberMe === "true") {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  });
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-primary-dark via-card to-primary p-4">
@@ -57,13 +92,33 @@ const Login: React.FC = () => {
               <span className="text-4xl font-black text-primary">D</span>
             </div>
             <h1 className="text-3xl font-display font-black text-white mb-2">
-              DrinKeo POS
+              DrinKéo POS
             </h1>
             <p className="text-white/80 text-sm">Sistema de Punto de Venta</p>
           </div>
 
           {/* Formulario */}
           <div className="p-8">
+            {/* Mensaje de error */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3 animate-fade-in">
+                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <p className="text-red-700 text-sm flex-1">{error}</p>
+                <button 
+                  onClick={() => setError("")}
+                  className="text-red-500 hover:text-red-700 transition-colors flex-shrink-0"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email */}
               <div>
@@ -80,8 +135,9 @@ const Login: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="usuario@ejemplo.com"
-                    className="w-full pl-11 pr-4 py-3 border border-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-button focus:border-transparent transition-all"
+                    className="w-full pl-11 pr-4 py-3 border border-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-button focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     required
+                    disabled={isLoading}
                   />
                   <svg
                     className="w-5 h-5 text-gray-400 absolute left-3 top-3.5"
@@ -114,8 +170,9 @@ const Login: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-11 pr-12 py-3 border border-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-button focus:border-transparent transition-all"
+                    className="w-full pl-11 pr-12 py-3 border border-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-button focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     required
+                    disabled={isLoading}
                   />
                   <svg
                     className="w-5 h-5 text-gray-400 absolute left-3 top-3.5"
@@ -133,7 +190,8 @@ const Login: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                    disabled={isLoading}
                   >
                     {showPassword ? (
                       <svg
@@ -181,7 +239,8 @@ const Login: React.FC = () => {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 text-button bg-gray-100 border-gray-300 rounded focus:ring-button focus:ring-2 cursor-pointer"
+                    className="w-4 h-4 text-button bg-gray-100 border-gray-300 rounded focus:ring-button focus:ring-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isLoading}
                   />
                   <span className="ml-2 text-sm text-gray-600 group-hover:text-gray-800">
                     Recordarme
@@ -198,22 +257,35 @@ const Login: React.FC = () => {
               {/* Botón de Login */}
               <button
                 type="submit"
-                className="w-full bg-linear-to-r from-button to-button-hover text-white py-3 rounded-lg font-bold text-lg hover:shadow-lg hover:scale-[1.02] transition-all duration-200 flex items-center justify-center space-x-2"
+                disabled={isLoading}
+                className="w-full bg-linear-to-r from-button to-button-hover text-white py-3 rounded-lg font-bold text-lg hover:shadow-lg hover:scale-[1.02] transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
               >
-                <span>Iniciar Sesión</span>
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Iniciando sesión...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Iniciar Sesión</span>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 7l5 5m0 0l-5 5m5-5H6"
+                      />
+                    </svg>
+                  </>
+                )}
               </button>
             </form>
           </div>
@@ -221,7 +293,7 @@ const Login: React.FC = () => {
 
         {/* Footer */}
         <p className="text-center text-white/60 text-sm mt-6">
-          © 2025 DrinKeo POS. Todos los derechos reservados.
+          © 2025 DrinKéo POS. Todos los derechos reservados.
         </p>
       </div>
     </div>
