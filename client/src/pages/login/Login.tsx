@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginRequest } from "@api/auth.api";
@@ -39,23 +38,19 @@ const Login: React.FC = () => {
         localStorage.removeItem("userEmail");
       }
 
-<<<<<<< HEAD
-      // Navegar al dashboard
-      navigate("/dashboard/productos/crear");
-    } catch (err: any) {
-=======
+      // Mostrar mensaje de bienvenida
       alert(`Bienvenido ${response.user.nombre} ✅`);
       
       // Redirigir según el rol del usuario
       if (response.user.rol === "cajero") {
         navigate("/dashboard/empleado");
       } else {
-        navigate("/dashboard");
+        navigate("/dashboard/productos/crear");
       }
-    } catch (err) {
->>>>>>> ede48ee965f2d8c315c5778e92c5ab0fbdc4878e
+
+    } catch (err: any) {
       console.error("Error en login:", err);
-      
+        
       // Manejo mejorado de errores
       let errorMessage = "Error al iniciar sesión. Verifica tus credenciales.";
       
@@ -76,8 +71,8 @@ const Login: React.FC = () => {
     }
   };
 
-  // Cargar email guardado si existe
-  useState(() => {
+  // Cargar email guardado si existe - CORREGIDO: usar useEffect en lugar de useState
+  useEffect(() => {
     const savedEmail = localStorage.getItem("userEmail");
     const savedRememberMe = localStorage.getItem("rememberMe");
     
@@ -85,7 +80,7 @@ const Login: React.FC = () => {
       setEmail(savedEmail);
       setRememberMe(true);
     }
-  });
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-primary-dark via-card to-primary p-4">
