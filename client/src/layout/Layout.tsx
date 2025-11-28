@@ -224,10 +224,10 @@ const Layout = () => {
         {/* Header / Barra superior */}
         <header className="h-16 bg-white shadow-sm flex items-center justify-between px-6">
           <div
-            className="flex items-center space-x-4"
+            className="flex items-center space-x-4 cursor-pointer"
             onClick={() => navigate("/dashboard")}
           >
-            <h1 className="text-2xl font-display font-bold text-primary-dark cursor-pointer">
+            <h1 className="text-2xl font-display font-bold text-primary-dark">
               DrinKéo POS
             </h1>
             <span className="px-3 py-1 bg-button/10 text-button text-sm font-medium rounded-full">

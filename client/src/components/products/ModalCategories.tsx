@@ -46,7 +46,7 @@ const ModalCategories = ({ isOpen, onClose, onSave }: ModalCategoriesProps) => {
           <h2 className="text-2xl font-bold text-gray-800">Nueva Categoría</h2>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
           >
             <svg
               className="w-6 h-6"
@@ -100,13 +100,13 @@ const ModalCategories = ({ isOpen, onClose, onSave }: ModalCategoriesProps) => {
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors cursor-pointer"
             >
               Crear Categoría
             </button>
