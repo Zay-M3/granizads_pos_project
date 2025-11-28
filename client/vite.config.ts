@@ -13,7 +13,11 @@ export default defineConfig({
       "@utils": path.resolve(__dirname, "./src/utils"),
       "@components": path.resolve(__dirname, "./src/components"),
       "@hooks": path.resolve(__dirname, "./src/hooks"),
+<<<<<<< HEAD
+      "@api": path.resolve(__dirname, "../client/api"),
+=======
       "@api": path.resolve(__dirname, "./src/api"),
+>>>>>>> ede48ee965f2d8c315c5778e92c5ab0fbdc4878e
     },
   },
 });
