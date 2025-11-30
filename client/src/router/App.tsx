@@ -9,6 +9,7 @@ import ListInventory from "@pages/inventory/ListInventory";
 import CreateInputs from "@pages/inventory/CreateInputs";
 import CreateCashier from "@pages/admin/CreateCashier";
 import ListCashier from "@pages/admin/ListCashier";
+import ListAllSales from "@pages/admin/ListAllSales";
 import Sales from "@pages/Employees/Sales";
 import NotFound from "@pages/notFound/NotFound";
 import { ProtectedRoute } from "@components/ProtectedRoute";
@@ -87,6 +88,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={["admin"]}>
             <CreateCashier />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "ventas",
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ListAllSales />
           </ProtectedRoute>
         ),
       },
