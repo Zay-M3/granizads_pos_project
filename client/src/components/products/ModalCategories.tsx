@@ -1,5 +1,9 @@
 import { useState } from "react";
 import ModalSuccess from "../ModalSuccess";
+import { createCategoria } from "@api/categorias.api";
+import type { CreateCategoria } from '@utils/CategoryUtils';
+import { AxiosError } from "axios";
+
 
 interface Category {
   id_categoria: number;
@@ -20,18 +24,41 @@ const ModalCategories = ({ isOpen, onClose, onSave }: ModalCategoriesProps) => {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (nombre.trim()) {
-      const newCategory: Category = {
-        id_categoria: Date.now(), // Temporal, la API asignará el ID real
-        nombre: nombre.trim(),
-        descripcion: descripcion.trim() || undefined,
-      };
-      onSave(newCategory);
-      setNombre("");
-      setDescripcion("");
-      setShowSuccess(true);
+
+    if (!nombre.trim()) return;
+
+    const body: CreateCategoria =  {
+      'nombre' : nombre.trim(),
+      'description' : descripcion.trim() || null
+    }
+
+    try {
+        const response = await createCategoria(body);
+        
+        if (response.status === 200) {
+
+          const newCategory: Category = {
+            id_categoria: Date.now(), // Temporal, la API asignará el ID real
+            nombre: nombre.trim(),
+            descripcion: descripcion.trim() || undefined,
+          };
+
+          onSave(newCategory);
+        } else {
+          console.error("Category creation failed with status:", response.status, response.data);
+        }
+        setNombre("");
+        setDescripcion("");
+        setShowSuccess(true);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        console.log(error)
+      } else {
+        console.error("Category creation failed with status:", response.status);      
+      }
+      setShowSuccess(false)
     }
   };
 
