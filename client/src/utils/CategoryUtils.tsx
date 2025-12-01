@@ -6,3 +6,8 @@ export interface Categoria {
   descripcion?: string;
   fecha_creacion?: string;
 }
+
+export interface CreateCategoria {
+  nombre: string,
+  descripcion?: string
+}

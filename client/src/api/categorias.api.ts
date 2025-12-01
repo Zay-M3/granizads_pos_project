@@ -1,5 +1,5 @@
 import api from './axios.config';
-import type { Categoria } from '@utils/CategoryUtils';
+import type { CreateCategoria, Categoria } from '@utils/CategoryUtils';
 
 export const getCategorias = async () => {
   const response = await api.get('/categorias');
@@ -11,7 +11,7 @@ export const getCategoriaById = async (id: number) => {
   return response.data;
 };
 
-export const createCategoria = async (categoria: Categoria) => {
+export const createCategoria = async (categoria: CreateCategoria) => {
   const response = await api.post('/categorias', categoria);
   return response.data;
 };
